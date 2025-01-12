@@ -5,11 +5,8 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "examples.refmap.json",
   "mixins": [
-    "ArrowMixin"
   ],
   "client": [
-    "ArrowRenderMixin",
-    "dead.AgeableListModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

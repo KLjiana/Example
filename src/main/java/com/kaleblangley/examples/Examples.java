@@ -8,8 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-@Mod("examples")
+@Mod(Examples.MODID)
 public class Examples {
+    public static final String MODID = "examples";
     public static final Logger LOGGER = LoggerFactory.getLogger("examples");
     public Examples(){
         IEventBus modBusEvent = FMLJavaModLoadingContext.get().getModEventBus();
