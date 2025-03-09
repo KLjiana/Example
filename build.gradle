@@ -46,24 +46,23 @@ legacyForge {
     }
 }
 
-dependencies {
-    compileOnly 'org.jetbrains:annotations:24.0.1'
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-}
-
-mixin {
-    add sourceSets.main, 'mixins.examples.refmap.json'
-    config 'mixins.examples.json'
-}
-
-sourceSets.main.resources { srcDir 'src/generated/resources' }
-
 repositories {
     maven { url = "https://maven.theillusivec4.top/" }
     maven { url "https://maven.shedaniel.me/" }
     maven { url 'https://jitpack.io' }
 }
 
+dependencies {
+    compileOnly 'org.jetbrains:annotations:24.0.1'
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "mixins.${mod_id}.json"
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 processResources {
     var replaceProperties = [
@@ -89,7 +88,7 @@ jar {
             "Implementation-Version": project.jar.archiveVersion,
             "Implementation-Vendor": mod_authors,
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-            "MixinConfigs": "mixins.examples.json"
+            "MixinConfigs": "mixins.${mod_id}.json"
     ])
 }
 
