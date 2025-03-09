@@ -1,6 +1,6 @@
 {
   "pack": {
-    "description": "examples resources",
+    "description": "${mod_name} resources",
     "pack_format": 15,
     "forge:server_data_pack_format": 12
   }
