@@ -53,6 +53,7 @@ repositories {
 }
 
 dependencies {
+    additionalRuntimeClasspath(jarJar(modImplementation 'org.reflections:reflections:0.10.2'))
     compileOnly 'org.jetbrains:annotations:24.0.1'
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }

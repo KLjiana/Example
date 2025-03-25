@@ -4,6 +4,8 @@
   "package": "com.kaleblangley.examples.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "EnchantmentMixin",
+    "accessor.EnchantmentAccessor"
   ],
   "client": [
   ],
