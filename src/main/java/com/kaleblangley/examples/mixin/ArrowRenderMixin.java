@@ -1,5 +1,7 @@
 package com.kaleblangley.examples.mixin;
 
+import com.kaleblangley.examples.impl.TrailSaver;
+import com.kaleblangley.examples.util.TrailRender;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.ArrowRenderer;
@@ -21,7 +23,8 @@ public class ArrowRenderMixin<T extends AbstractArrow> extends EntityRenderer<T>
     }
 
     @Inject(method = "render(Lnet/minecraft/world/entity/projectile/AbstractArrow;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At("TAIL"))
-    public void renderTrace(T spectralArrowEntity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource, int light, CallbackInfo ci) {
+    public void renderTrace(T spectralArrowEntity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource multiBufferSource, int light, CallbackInfo ci) {
+        TrailRender.render(((TrailSaver) spectralArrowEntity).getPastPositions(), spectralArrowEntity, poseStack, multiBufferSource);
 //        List<Vec3> trails = ((TrailSaver) spectralArrowEntity).getPastPositions();
 //        if (trails.isEmpty()) return;
 //        Vec3 pos0;

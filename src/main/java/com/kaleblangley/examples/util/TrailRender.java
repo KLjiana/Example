@@ -13,7 +13,7 @@ import org.joml.Matrix4f;
 import java.util.List;
 
 public class TrailRender {
-    public void render(List<Vec3> trails, Entity entity, PoseStack poseStack, MultiBufferSource multiBufferSource){
+    public static void render(List<Vec3> trails, Entity entity, PoseStack poseStack, MultiBufferSource multiBufferSource){
         if (trails.isEmpty()) return;
         Vec3 pos0;
         Vec3 pos1;
