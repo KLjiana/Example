@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Enchantment.class)
@@ -74,63 +75,63 @@ public class EnchantmentMixin implements IEnchantmentParameter {
         this.allowedOnBooks = allowedOnBooks;
     }
 
-    @Inject(method = "getMinLevel", at = @At(value = "HEAD"))
+    @Inject(method = "getMinLevel", at = @At(value = "HEAD"), cancellable = true)
     public void modifyMinLevel(CallbackInfoReturnable<Integer> cir) {
         if (minLevel != null) {
             cir.setReturnValue(minLevel);
         }
     }
 
-    @Inject(method = "getMaxLevel", at = @At(value = "HEAD"))
+    @Redirect(method = "getMaxLevel", at = @At(value = "HEAD"))
     public void modifyMaxLevel(CallbackInfoReturnable<Integer> cir) {
         if (maxLevel != null) {
             cir.setReturnValue(maxLevel);
         }
     }
 
-    @Inject(method = "getMinCost", at = @At(value = "HEAD"))
+    @Inject(method = "getMinCost", at = @At(value = "HEAD"), cancellable = true)
     public void modifyMinCost(int level, CallbackInfoReturnable<Integer> cir) {
         if (minCost != null) {
             cir.setReturnValue(minCost);
         }
     }
 
-    @Inject(method = "getMaxCost", at = @At(value = "HEAD"))
+    @Inject(method = "getMaxCost", at = @At(value = "HEAD"), cancellable = true)
     public void modifyMaxCost(CallbackInfoReturnable<Integer> cir) {
         if (maxCost != null) {
             cir.setReturnValue(maxCost);
         }
     }
 
-    @Inject(method = "isTreasureOnly", at = @At(value = "HEAD"))
+    @Inject(method = "isTreasureOnly", at = @At(value = "HEAD"), cancellable = true)
     public void modifyTreasureOnly(CallbackInfoReturnable<Boolean> cir) {
         if (treasureOnly != null) {
             cir.setReturnValue(treasureOnly);
         }
     }
 
-    @Inject(method = "isCurse", at = @At(value = "HEAD"))
+    @Inject(method = "isCurse", at = @At(value = "HEAD"), cancellable = true)
     public void modifyCurse(CallbackInfoReturnable<Boolean> cir) {
         if (curse != null) {
             cir.setReturnValue(curse);
         }
     }
 
-    @Inject(method = "isTradeable", at = @At(value = "HEAD"))
+    @Inject(method = "isTradeable", at = @At(value = "HEAD"), cancellable = true)
     public void modifyTradeable(CallbackInfoReturnable<Boolean> cir) {
         if (tradeable != null) {
             cir.setReturnValue(tradeable);
         }
     }
 
-    @Inject(method = "isDiscoverable", at = @At(value = "HEAD"))
+    @Inject(method = "isDiscoverable", at = @At(value = "HEAD"), cancellable = true)
     public void modifyDiscoverable(CallbackInfoReturnable<Boolean> cir) {
         if (discoverable != null) {
             cir.setReturnValue(discoverable);
         }
     }
 
-    @Inject(method = "isAllowedOnBooks", at = @At(value = "HEAD"), remap = false)
+    @Inject(method = "isAllowedOnBooks", at = @At(value = "HEAD"), remap = false, cancellable = true)
     public void modifyAllowedOnBooks(CallbackInfoReturnable<Boolean> cir) {
         if (allowedOnBooks != null) {
             cir.setReturnValue(allowedOnBooks);
