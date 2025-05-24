@@ -37,6 +37,10 @@ legacyForge {
         server {
             server()
         }
+        configureEach {
+            jvmArgument "-XX:+AllowEnhancedClassRedefinition"
+            jvmArgument "-XX:HotswapAgent=fatjar"
+        }
     }
 
     mods {
