@@ -8,8 +8,7 @@
     "ArrowMixin"
   ],
   "client": [
-    "ArrowRenderMixin",
-    "dead.AgeableListModelMixin"
+    "ArrowRenderMixin"
   ],
   "injectors": {
     "defaultRequire": 1
