@@ -13,6 +13,7 @@ version = mod_version
 group = mod_group_id
 
 repositories {
+    maven { url "https://maven.shedaniel.me/" }
     mavenLocal()
 }
 
@@ -60,6 +61,11 @@ neoForge {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.DEBUG
         }
+
+        configureEach {
+            jvmArgument "-XX:+AllowEnhancedClassRedefinition"
+            jvmArgument "-XX:HotswapAgent=fatjar"
+        }
     }
 
     mods {
@@ -76,6 +82,7 @@ configurations {
 }
 
 dependencies {
+    api "me.shedaniel.cloth:cloth-config-neoforge:15.0.140"
 }
 
 tasks.withType(ProcessResources).configureEach {
