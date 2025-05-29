@@ -1,6 +1,7 @@
 package org.mcteampotato.event;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -9,6 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -88,6 +90,13 @@ public class GameEvent {
             if (hurtTime != 0 && gameTime-hurtTime>=200 && gameTime % 10 == 0){
                 serverPlayer.heal(0.5f);
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void deathEvent(LivingDeathEvent event){
+        if (event.getEntity() instanceof LocalPlayer localPlayer) {
+            localPlayer.getData(SOLValpotato.FOOD_DATA).clear(localPlayer);
         }
     }
 }
