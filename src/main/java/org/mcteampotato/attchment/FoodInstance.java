@@ -1,4 +1,4 @@
-package vice.sol_valheim.attchment;
+package org.mcteampotato.attchment;
 
 public class FoodInstance {
     private final FoodData.FoodInfo info;

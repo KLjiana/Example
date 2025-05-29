@@ -1,4 +1,4 @@
-package vice.sol_valheim.attchment;
+package org.mcteampotato.attchment;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -17,8 +17,7 @@ public class FoodData {
         FoodProperties props = Optional.ofNullable(item.getFoodProperties(new ItemStack(item), null)).orElse(empty);
         int nutrition = props.nutrition();
         if (nutrition <= 0) return null;
-        // TODO TIME
-        int durationTicks = nutrition * 20;
+        int durationTicks = (int) (10 * Math.log(nutrition+1) * 60 * 20);
         return new FoodInfo(itemId, nutrition, durationTicks, 0);
     }
 

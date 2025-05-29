@@ -1,19 +1,21 @@
-package vice.sol_valheim.mixin;
+package org.mcteampotato.mixin;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import org.mcteampotato.SOLValpotato;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import vice.sol_valheim.SOLValheim;
-import vice.sol_valheim.attchment.FoodData;
-import vice.sol_valheim.attchment.FoodDataAttachment;
+import org.mcteampotato.attchment.FoodData;
+import org.mcteampotato.attchment.FoodDataAttachment;
 
 @Mixin(Player.class)
 public class PlayerMixin {
@@ -22,7 +24,7 @@ public class PlayerMixin {
         Player player = (Player) (Object) this;
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(food.getItem());
         FoodData.FoodInfo info = FoodData.getInfo(id);
-        FoodDataAttachment foodData = player.getData(SOLValheim.FOOD_DATA);
+        FoodDataAttachment foodData = player.getData(SOLValpotato.FOOD_DATA);
         if (!player.isLocalPlayer()) {
             if (food.is(Items.ROTTEN_FLESH)){
                 foodData.clear(player);
@@ -30,5 +32,11 @@ public class PlayerMixin {
                 foodData.addFood(info, player);
             }
         }
+        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, foodProperties.saturation() >= 30 ? 30 : Math.round(foodProperties.saturation()), (int) foodProperties.saturation() / 30));
+    }
+
+    @Inject(method = "canEat", at = @At("HEAD"), cancellable = true)
+    public void alwaysEat(boolean canAlwaysEat, CallbackInfoReturnable<Boolean> cir){
+        cir.setReturnValue(true);
     }
 }

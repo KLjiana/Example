@@ -18,7 +18,7 @@ repositories {
 }
 
 base {
-    archivesName = mod_id
+    archivesName = mod_name
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
@@ -82,7 +82,7 @@ configurations {
 }
 
 dependencies {
-    api "me.shedaniel.cloth:cloth-config-neoforge:15.0.140"
+//    api "me.shedaniel.cloth:cloth-config-neoforge:15.0.140"
 }
 
 tasks.withType(ProcessResources).configureEach {
