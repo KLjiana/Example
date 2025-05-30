@@ -14,6 +14,7 @@ group = mod_group_id
 
 repositories {
     maven { url "https://maven.shedaniel.me/" }
+    maven {url "https://cursemaven.com/" }
     mavenLocal()
 }
 
@@ -82,7 +83,7 @@ configurations {
 }
 
 dependencies {
-//    api "me.shedaniel.cloth:cloth-config-neoforge:15.0.140"
+    implementation "curse.maven:some-assembly-required-422951:6520221"
 }
 
 tasks.withType(ProcessResources).configureEach {

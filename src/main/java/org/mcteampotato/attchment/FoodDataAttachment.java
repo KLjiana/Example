@@ -6,6 +6,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,6 +15,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.common.util.DataComponentUtil;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +25,7 @@ import org.mcteampotato.config.ValpotatoConfig;
 import org.mcteampotato.network.SyncFoodDataPacket;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class FoodDataAttachment implements IFoodSlots, INBTSerializable<CompoundTag> {
     public static final ResourceLocation healthModifier = ResourceLocation.fromNamespaceAndPath(SOLValpotato.MOD_ID, "food_health_add");
@@ -38,7 +42,7 @@ public class FoodDataAttachment implements IFoodSlots, INBTSerializable<Compound
         slots.add(new FoodInstance(info, info.getDurationTicks()));
         if (player instanceof ServerPlayer serverPlayer) {
             setHealthModifier(serverPlayer);
-            PacketDistributor.sendToPlayer(serverPlayer, new SyncFoodDataPacket(serialize()));
+            PacketDistributor.sendToPlayer(serverPlayer, new SyncFoodDataPacket(serialize(player.level().registryAccess())));
         }
         return true;
     }
@@ -59,11 +63,9 @@ public class FoodDataAttachment implements IFoodSlots, INBTSerializable<Compound
         healthAttribute.addPermanentModifier(new AttributeModifier(healthModifier, getTotalHealth(), AttributeModifier.Operation.ADD_VALUE));
     }
 
-    public boolean isSame(Item item){
+    public boolean isSame(Item item) {
         for (FoodInstance foodInstance : slots) {
-            if (foodInstance.getInfo().getId().equals(BuiltInRegistries.ITEM.getKey(item))) {
-                return true;
-            }
+            return foodInstance.getInfo().getItemStack().is(item);
         }
         return false;
     }
@@ -75,14 +77,17 @@ public class FoodDataAttachment implements IFoodSlots, INBTSerializable<Compound
             if (foodInstance.getRemainingTicks() <= 0) {
                 slots.remove(foodInstance);
                 setHealthModifier(player);
+                PacketDistributor.sendToPlayer((ServerPlayer) player, new SyncFoodDataPacket(serialize(player.level().registryAccess())));
             }
         }
 
         if (!slots.isEmpty()) {
-            int ticks = slots.getFirst().getRemainingTicks();
-            if (ticks < 1200 && ticks % 20 != 0) return;
-            else if (ticks % 1200 != 0) return;
-            PacketDistributor.sendToPlayer((ServerPlayer) player, new SyncFoodDataPacket(serialize()));
+            for (FoodInstance foodInstance : slots) {
+                int ticks = foodInstance.getRemainingTicks();
+                if (ticks < 1200 && ticks % 20 != 0) continue;
+                else if (ticks >= 1200 && ticks % 1200 != 0) continue;
+                PacketDistributor.sendToPlayer((ServerPlayer) player, new SyncFoodDataPacket(serialize(player.level().registryAccess())));
+            }
         }
     }
 
@@ -94,7 +99,7 @@ public class FoodDataAttachment implements IFoodSlots, INBTSerializable<Compound
             if (healthAttribute.hasModifier(healthModifier)) {
                 healthAttribute.removeModifier(healthModifier);
             }
-            PacketDistributor.sendToPlayer(serverPlayer, new SyncFoodDataPacket(serialize()));
+            PacketDistributor.sendToPlayer(serverPlayer, new SyncFoodDataPacket(serialize(serverPlayer.level().registryAccess())));
         }
     }
 
@@ -105,16 +110,18 @@ public class FoodDataAttachment implements IFoodSlots, INBTSerializable<Compound
 
     @Override
     public CompoundTag serializeNBT(HolderLookup.@NotNull Provider provider) {
-        return serialize();
+        return serialize(provider);
     }
 
-    public CompoundTag serialize() {
+    public CompoundTag serialize(HolderLookup.Provider provider) {
         CompoundTag tag = new CompoundTag();
         ListTag list = new ListTag();
-        for (FoodInstance inst : slots) {
+        for (FoodInstance foodInstance : slots) {
             CompoundTag instTag = new CompoundTag();
-            instTag.putString("item", inst.getInfo().getId().toString());
-            instTag.putInt("remaining", inst.getRemainingTicks());
+            ItemStack itemStack = foodInstance.getInfo().getItemStack();
+            if (itemStack.isEmpty()) continue;
+            instTag.put("itemstack", itemStack.save(provider));
+            instTag.putInt("remaining", foodInstance.getRemainingTicks());
             list.add(instTag);
         }
         tag.put("slots", list);
@@ -131,8 +138,8 @@ public class FoodDataAttachment implements IFoodSlots, INBTSerializable<Compound
         ListTag list = nbt.getList("slots", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag instTag = list.getCompound(i);
-            ResourceLocation id = ResourceLocation.parse(instTag.getString("item"));
-            FoodData.FoodInfo info = FoodData.getInfo(id);
+            ItemStack itemstack = ItemStack.CODEC.decode(NbtOps.INSTANCE, instTag.get("itemstack")).getOrThrow().getFirst();
+            FoodData.FoodInfo info = FoodData.getInfo(itemstack);
             if (info != null) {
                 int rem = instTag.getInt("remaining");
                 slots.add(new FoodInstance(info, rem));

@@ -22,17 +22,18 @@ public class PlayerMixin {
     @Inject(method = "eat", at = @At("HEAD"))
     public void eat(Level level, ItemStack food, FoodProperties foodProperties, CallbackInfoReturnable<ItemStack> cir){
         Player player = (Player) (Object) this;
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(food.getItem());
-        FoodData.FoodInfo info = FoodData.getInfo(id);
+        ItemStack itemStack = food.copy();
+        FoodData.FoodInfo info = FoodData.getInfo(itemStack);
         FoodDataAttachment foodData = player.getData(SOLValpotato.FOOD_DATA);
+        if (info==null) SOLValpotato.LOGGER.error("[FoodData Error] {} can find foodinfo", food.getItem().toString());
         if (!player.isLocalPlayer()) {
-            if (food.is(Items.ROTTEN_FLESH)){
+            if (itemStack.is(Items.ROTTEN_FLESH)){
                 foodData.clear(player);
             } else {
                 foodData.addFood(info, player);
             }
         }
-        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, foodProperties.saturation() >= 30 ? 30 : Math.round(foodProperties.saturation()), (int) foodProperties.saturation() / 30));
+        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, info.getSaturation() >= 30 ? 30 : Math.round(info.getSaturation()), (int) info.getSaturation() / 30));
     }
 
     @Inject(method = "canEat", at = @At("HEAD"), cancellable = true)

@@ -27,19 +27,17 @@ public class GameEvent {
         int height = guiGraphics.guiHeight() - 32;
         for (int i = 0; i < foodData.getSlots().size(); i++) {
             FoodInstance foodInstance = foodData.getSlots().get(i);
-            ResourceLocation id = foodInstance.getInfo().getId();
-            Item item = BuiltInRegistries.ITEM.get(id);
             int actualWidth = width - (i % 4) * 20;
             int actualHeight = height - (i / 4) * 20;
             guiGraphics.fill(actualWidth - 18, actualHeight - 18, actualWidth, actualHeight, 128 << 24 & 0xFF000000);
-            guiGraphics.renderItem(item.getDefaultInstance(), actualWidth - 18, actualHeight - 18);
+            guiGraphics.renderItem(foodInstance.getInfo().getItemStack(), actualWidth - 18, actualHeight - 18);
             PoseStack pose = guiGraphics.pose();
             pose.pushPose();
             Matrix4f matrix4f = pose.last().pose();
             matrix4f.translate(0.0F, 0.0F, 200.0F);
             int remainingSeconds = foodInstance.getRemainingSeconds();
-            boolean isMin = remainingSeconds > 60;
-            if (isMin) remainingSeconds /= 60;
+            boolean isMin = remainingSeconds >= 60;
+            if (isMin) remainingSeconds = (int) Math.ceil((float) remainingSeconds / 60);
             String text = "%s%s".formatted(remainingSeconds, isMin ? "m" : "s");
             guiGraphics.drawString(mc.font, text, (actualWidth - mc.font.width(text)), actualHeight -9, 0xFFFFFFFF, false);
             pose.popPose();
