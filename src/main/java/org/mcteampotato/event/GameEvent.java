@@ -105,13 +105,4 @@ public class GameEvent {
             }
         }
     }
-
-    @SubscribeEvent
-    public static void deathEvent(LivingDeathEvent event) {
-        if (event.getEntity() instanceof Player player) {
-            if (player.isLocalPlayer()) {
-                player.getData(SOLValpotato.FOOD_DATA).clear(player);
-            }
-        }
-    }
 }

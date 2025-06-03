@@ -23,7 +23,7 @@ public class SOLValpotato {
     public static final String MOD_ID = "sol_valpotato";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     private static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPE = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, MOD_ID);
-    public static final Supplier<AttachmentType<FoodDataAttachment>> FOOD_DATA = ATTACHMENT_TYPE.register("food_data", () -> AttachmentType.serializable(FoodDataAttachment::new).copyOnDeath().build());
+    public static final Supplier<AttachmentType<FoodDataAttachment>> FOOD_DATA = ATTACHMENT_TYPE.register("food_data", () -> AttachmentType.serializable(FoodDataAttachment::new).build());
 
     public SOLValpotato(IEventBus iEventBus, ModContainer modContainer) {
         ATTACHMENT_TYPE.register(iEventBus);
