@@ -1,0 +1,1 @@
+com.kaleblangley.count_craft.kubejs.JSPlugin
