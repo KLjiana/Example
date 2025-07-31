@@ -19,6 +19,7 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -37,61 +38,92 @@ public class CountShapelessRecipe extends ShapelessKubeJSRecipe implements ICoun
 
     @Override
     public @NotNull NonNullList<ItemStack> getRemainingItems(CraftingContainer container) {
-        IntArrayList naturalIndexs = new IntArrayList(index2count.keySet());
-        naturalIndexs.sort(IntComparators.NATURAL_COMPARATOR);
-        IntList frontEmpty = getFrontEmpty(container);
+        List<Ingredient> ingredients = getIngredients();
+        Int2IntMap index2count = getIndex2count();
+        boolean[] used = new boolean[ingredients.size()];
 
-        for (int i = 0; i < naturalIndexs.size(); i++) {
-            int index = naturalIndexs.getInt(i);
-            if (i >= frontEmpty.size()) {
-                continue;
-            }
-            int slotIndex = index - 1 + frontEmpty.getInt(i);
-            if (slotIndex >= 0 && slotIndex < container.getContainerSize()) {
-                container.removeItem(slotIndex, index2count.get(index) - 1);
+        Int2IntMap slotToIngredientIndex = new Int2IntOpenHashMap();
+
+        for (int slot = 0; slot < container.getContainerSize(); slot++) {
+            ItemStack input = container.getItem(slot);
+            if (input.isEmpty()) continue;
+
+            for (int i = 0; i < ingredients.size(); i++) {
+                if (used[i]) continue;
+                Ingredient ing = ingredients.get(i);
+                if (ing.test(input)) {
+                    slotToIngredientIndex.put(slot, i);
+                    used[i] = true;
+                    break;
+                }
             }
         }
+
+        for (Int2IntMap.Entry entry : slotToIngredientIndex.int2IntEntrySet()) {
+            int slot = entry.getIntKey();
+            int ingredientIndex = entry.getIntValue(); // 从0开始
+
+            int countIndex = ingredientIndex + 1;
+            if (index2count.containsKey(countIndex)) {
+                int requiredCount = index2count.get(countIndex);
+                if (requiredCount > 1) {
+                    container.removeItem(slot, requiredCount - 1);
+                }
+            }
+        }
+
         return super.getRemainingItems(container);
     }
 
 
+
     @Override
     public boolean matches(@NotNull CraftingContainer container, @NotNull Level level) {
-        List<Ingredient> ingredients = getIngredients();
+        List<Ingredient> ingredients = new ArrayList<>(getIngredients()); // 可变列表
         Int2IntMap index2count = getIndex2count();
-        IntList frontEmpty = getFrontEmpty(container);
 
-        int matched = 0;
+        // 用于标记配方 Ingredient 是否被匹配过
+        boolean[] used = new boolean[ingredients.size()];
+
         for (int slot = 0; slot < container.getContainerSize(); slot++) {
-            ItemStack stack = container.getItem(slot);
-            if (stack.isEmpty()) continue;
+            ItemStack inputStack = container.getItem(slot);
+            if (inputStack.isEmpty()) continue;
 
-            if (matched >= ingredients.size()) {
-                return false; // 多余物品，不匹配
-            }
+            boolean matched = false;
 
-            Ingredient expected = ingredients.get(matched);
-            if (!expected.test(stack)) {
-                return false; // 类型不匹配
-            }
+            for (int i = 0; i < ingredients.size(); i++) {
+                if (used[i]) continue;
 
-            int index = matched + 1;
-            if (index2count.containsKey(index)) {
-                int required = index2count.get(index);
-                if (stack.getCount() < required) {
-                    return false; // 数量不足
+                Ingredient ing = ingredients.get(i);
+                if (ing.test(inputStack)) {
+                    // 如果这个 Ingredient 在 index2count 中，需要检查数量
+                    int index = i + 1;
+                    if (index2count.containsKey(index)) {
+                        int requiredCount = index2count.get(index);
+                        if (inputStack.getCount() < requiredCount) {
+                            return false; // 数量不够
+                        }
+                    }
+
+                    used[i] = true;
+                    matched = true;
+                    break;
                 }
             }
 
-            matched++;
+            if (!matched) return false; // 有输入物品无法匹配任何 Ingredient
         }
 
-        if (matched == ingredients.size()) {
-            return super.matches(container, level);
-        } else {
-            return false;
+        // 检查是否所有 Ingredient 都被匹配到了（允许少物品？可根据需求删这段）
+        for (int i = 0; i < ingredients.size(); i++) {
+            if (!used[i] && !ingredients.get(i).isEmpty()) {
+                return false; // 有 Ingredient 没匹配上
+            }
         }
+
+        return true;
     }
+
 
     @Override
     public Int2IntOpenHashMap getIndex2count() {
