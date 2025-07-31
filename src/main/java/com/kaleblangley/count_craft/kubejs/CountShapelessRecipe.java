@@ -61,7 +61,7 @@ public class CountShapelessRecipe extends ShapelessKubeJSRecipe implements ICoun
 
         for (Int2IntMap.Entry entry : slotToIngredientIndex.int2IntEntrySet()) {
             int slot = entry.getIntKey();
-            int ingredientIndex = entry.getIntValue(); // 从0开始
+            int ingredientIndex = entry.getIntValue();
 
             int countIndex = ingredientIndex + 1;
             if (index2count.containsKey(countIndex)) {
@@ -79,10 +79,9 @@ public class CountShapelessRecipe extends ShapelessKubeJSRecipe implements ICoun
 
     @Override
     public boolean matches(@NotNull CraftingContainer container, @NotNull Level level) {
-        List<Ingredient> ingredients = new ArrayList<>(getIngredients()); // 可变列表
+        List<Ingredient> ingredients = new ArrayList<>(getIngredients());
         Int2IntMap index2count = getIndex2count();
 
-        // 用于标记配方 Ingredient 是否被匹配过
         boolean[] used = new boolean[ingredients.size()];
 
         for (int slot = 0; slot < container.getContainerSize(); slot++) {
@@ -96,12 +95,11 @@ public class CountShapelessRecipe extends ShapelessKubeJSRecipe implements ICoun
 
                 Ingredient ing = ingredients.get(i);
                 if (ing.test(inputStack)) {
-                    // 如果这个 Ingredient 在 index2count 中，需要检查数量
                     int index = i + 1;
                     if (index2count.containsKey(index)) {
                         int requiredCount = index2count.get(index);
                         if (inputStack.getCount() < requiredCount) {
-                            return false; // 数量不够
+                            return false;
                         }
                     }
 
@@ -111,13 +109,12 @@ public class CountShapelessRecipe extends ShapelessKubeJSRecipe implements ICoun
                 }
             }
 
-            if (!matched) return false; // 有输入物品无法匹配任何 Ingredient
+            if (!matched) return false;
         }
 
-        // 检查是否所有 Ingredient 都被匹配到了（允许少物品？可根据需求删这段）
         for (int i = 0; i < ingredients.size(); i++) {
             if (!used[i] && !ingredients.get(i).isEmpty()) {
-                return false; // 有 Ingredient 没匹配上
+                return false;
             }
         }
 
@@ -128,31 +125,6 @@ public class CountShapelessRecipe extends ShapelessKubeJSRecipe implements ICoun
     @Override
     public Int2IntOpenHashMap getIndex2count() {
         return index2count;
-    }
-
-    private Int2IntMap getIndexSlotMap(CraftingContainer container) {
-        Int2IntOpenHashMap indexToSlot = new Int2IntOpenHashMap();
-        List<Ingredient> ingredients = getIngredients();
-        IntList frontEmpty = getFrontEmpty(container);
-
-        int found = 0;
-        for (int slot = 0; slot < container.getContainerSize(); slot++) {
-            ItemStack stack = container.getItem(slot);
-            if (stack.isEmpty()) continue;
-
-            if (found >= ingredients.size()) break;
-
-            Ingredient expected = ingredients.get(found);
-            if (expected.test(stack)) {
-                int index = found + 1; // 1-based
-                int offset = frontEmpty.size() > found ? frontEmpty.getInt(found) : 0;
-                int expectedSlot = index - 1 + offset;
-                indexToSlot.put(index, slot);
-                found++;
-            }
-        }
-
-        return indexToSlot;
     }
 
     public static class SerializerJS extends SerializerKJS implements ICountSerializer {
