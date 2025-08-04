@@ -3,10 +3,14 @@ package com.kaleblangley.count_craft.kubejs;
 import com.google.gson.JsonObject;
 import com.kaleblangley.count_craft.impl.ICountRecipe;
 import com.kaleblangley.count_craft.impl.ICountSerializer;
-import com.kaleblangley.count_craft.mixin.ShapedKubeJSRecipeMixin;
+import com.kaleblangley.count_craft.init.RecipeSerializerInit;
+import com.kaleblangley.count_craft.mixin.ShapedKubeJSRecipeAccessor;
 import dev.latvian.mods.kubejs.recipe.ModifyRecipeResultCallback;
+import dev.latvian.mods.kubejs.recipe.RecipesEventJS;
 import dev.latvian.mods.kubejs.recipe.ingredientaction.IngredientAction;
 import dev.latvian.mods.kubejs.recipe.special.ShapedKubeJSRecipe;
+import dev.latvian.mods.kubejs.registry.RegistryInfo;
+import dev.latvian.mods.kubejs.util.UtilsJS;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparators;
@@ -14,15 +18,19 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public class CountShapedRecipe extends ShapedKubeJSRecipe implements ICountRecipe {
@@ -37,7 +45,7 @@ public class CountShapedRecipe extends ShapedKubeJSRecipe implements ICountRecip
                 kubeJSRecipe.getHeight(),
                 kubeJSRecipe.getIngredients(),
                 kubeJSRecipe.getResultItem(null),
-                (((ShapedKubeJSRecipeMixin) kubeJSRecipe)).getMirror(),
+                (((ShapedKubeJSRecipeAccessor) kubeJSRecipe)).getMirror(),
                 kubeJSRecipe.kjs$getIngredientActions(),
                 kubeJSRecipe.kjs$getModifyResult(),
                 kubeJSRecipe.kjs$getStage(),
@@ -57,6 +65,11 @@ public class CountShapedRecipe extends ShapedKubeJSRecipe implements ICountRecip
     @Override
     public Int2IntOpenHashMap getIndex2count() {
         return index2count;
+    }
+
+    @Override
+    public @NotNull RecipeSerializer<?> getSerializer() {
+        return RecipeSerializerInit.SHAPED.get();
     }
 
     @Override
@@ -87,20 +100,76 @@ public class CountShapedRecipe extends ShapedKubeJSRecipe implements ICountRecip
         return super.matches(container, level);
     }
 
-    public static class SerializerJS extends SerializerKJS implements ICountSerializer {
+    public static class Serializer implements ICountSerializer, RecipeSerializer<CountShapedRecipe> {
+        private static final RecipeSerializer<ShapedRecipe> SHAPED = UtilsJS.cast(RegistryInfo.RECIPE_SERIALIZER.getValue(new ResourceLocation("crafting_shaped")));
+
         @Override
         public @NotNull CountShapedRecipe fromJson(ResourceLocation id, JsonObject json) {
-            return new CountShapedRecipe(super.fromJson(id, json), fromJson(json));
+            ShapedRecipe shapedRecipe = SHAPED.fromJson(id, json);
+            boolean mirror = GsonHelper.getAsBoolean(json, "kubejs:mirror", true);
+            boolean shrink = GsonHelper.getAsBoolean(json, "kubejs:shrink", true);
+            Map<String, Ingredient> key = ShapedRecipe.keyFromJson(GsonHelper.getAsJsonObject(json, "key"));
+            String[] pattern = ShapedRecipe.patternFromJson(GsonHelper.getAsJsonArray(json, "pattern"));
+            if (shrink) {
+                pattern = ShapedRecipe.shrink(pattern);
+            }
+
+            int w = pattern[0].length();
+            int h = pattern.length;
+            NonNullList<Ingredient> ingredients = ShapedRecipe.dissolvePattern(pattern, key, w, h);
+            List<IngredientAction> ingredientActions = IngredientAction.parseList(json.get("kubejs:actions"));
+            ModifyRecipeResultCallback modifyResult = null;
+            if (json.has("kubejs:modify_result")) {
+                modifyResult = RecipesEventJS.MODIFY_RESULT_CALLBACKS.get(id);
+            }
+
+            String stage = GsonHelper.getAsString(json, "kubejs:stage", "");
+            ShapedKubeJSRecipe jsRecipe = new ShapedKubeJSRecipe(id, shapedRecipe.getGroup(), shapedRecipe.category(), w, h, ingredients, shapedRecipe.result, mirror, ingredientActions, modifyResult, stage);
+            return new CountShapedRecipe(jsRecipe, fromJson(json));
         }
 
         @Override
         public CountShapedRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buf) {
-            return new CountShapedRecipe(super.fromNetwork(id, buf), fromNetwork(buf));
+            ShapedRecipe shapedRecipe = SHAPED.fromNetwork(id, buf);
+            int flags = buf.readByte();
+            String group = shapedRecipe.getGroup();
+            CraftingBookCategory category = shapedRecipe.category();
+            int width = shapedRecipe.getWidth();
+            int height = shapedRecipe.getHeight();
+            NonNullList<Ingredient> ingredients = shapedRecipe.getIngredients();
+            ItemStack result = shapedRecipe.result;
+            List<IngredientAction> ingredientActions = (flags & 1) != 0 ? IngredientAction.readList(buf) : List.of();
+            String stage = (flags & 2) != 0 ? buf.readUtf() : "";
+            boolean mirror = (flags & 4) != 0;
+            ShapedKubeJSRecipe jsRecipe = new ShapedKubeJSRecipe(id, group, category, width, height, ingredients, result, mirror, ingredientActions, null, stage);
+            return new CountShapedRecipe(jsRecipe, fromNetwork(buf));
         }
 
         @Override
-        public void toNetwork(FriendlyByteBuf buf, ShapedKubeJSRecipe r) {
-            super.toNetwork(buf, r);
+        public void toNetwork(FriendlyByteBuf buf, CountShapedRecipe r) {
+            SHAPED.toNetwork(buf, r);
+            int flags = 0;
+            if (r.kjs$getIngredientActions() != null && !r.kjs$getIngredientActions().isEmpty()) {
+                flags |= 1;
+            }
+
+            if (((ShapedKubeJSRecipeAccessor) r).getMirror()) {
+                flags |= 4;
+            }
+
+            if (!r.kjs$getStage().isEmpty()) {
+                flags |= 2;
+            }
+
+            buf.writeByte(flags);
+            if (r.kjs$getIngredientActions() != null && !r.kjs$getIngredientActions().isEmpty()) {
+                IngredientAction.writeList(buf, r.kjs$getIngredientActions());
+            }
+
+            if (!r.kjs$getStage().isEmpty()) {
+                buf.writeUtf(r.kjs$getStage());
+            }
+
             tooNetwork(buf, r);
         }
     }

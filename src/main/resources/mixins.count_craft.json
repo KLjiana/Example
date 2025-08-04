@@ -4,8 +4,8 @@
   "package": "com.kaleblangley.count_craft.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "ShapedKubeJSRecipeMixin",
-    "ShapedRecipeJSMixin",
+    "ShapedKubeJSRecipeAccessor",
+    "ShapedRecipeJSAccessor",
     "ShapelessKubeJSRecipeMixin"
   ],
   "client": [

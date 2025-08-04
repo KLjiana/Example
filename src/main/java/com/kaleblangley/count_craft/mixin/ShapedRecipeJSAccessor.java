@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(value = ShapedRecipeSchema.ShapedRecipeJS.class, remap = false)
-public interface ShapedRecipeJSMixin {
+public interface ShapedRecipeJSAccessor {
     @Invoker("set2DValues")
     void set2DValues(ComponentValueMap from);
 }

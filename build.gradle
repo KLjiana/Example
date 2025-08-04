@@ -36,6 +36,7 @@ legacyForge {
         }
         server {
             server()
+            setGameDirectory(file("server"))
         }
 
         configureEach {

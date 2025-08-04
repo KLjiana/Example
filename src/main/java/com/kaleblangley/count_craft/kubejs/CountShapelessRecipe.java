@@ -4,16 +4,22 @@ import com.google.gson.JsonObject;
 import com.kaleblangley.count_craft.impl.ICountRecipe;
 import com.kaleblangley.count_craft.impl.ICountSerializer;
 import com.kaleblangley.count_craft.impl.ShapelessRecipeAccessor;
+import com.kaleblangley.count_craft.init.RecipeSerializerInit;
 import dev.latvian.mods.kubejs.recipe.ModifyRecipeResultCallback;
+import dev.latvian.mods.kubejs.recipe.RecipesEventJS;
 import dev.latvian.mods.kubejs.recipe.ingredientaction.IngredientAction;
 import dev.latvian.mods.kubejs.recipe.special.ShapelessKubeJSRecipe;
+import dev.latvian.mods.kubejs.registry.RegistryInfo;
+import dev.latvian.mods.kubejs.util.UtilsJS;
 import it.unimi.dsi.fastutil.ints.*;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 public class CountShapelessRecipe extends ShapelessKubeJSRecipe implements ICountRecipe {
     private final Int2IntOpenHashMap index2count;
@@ -30,8 +35,8 @@ public class CountShapelessRecipe extends ShapelessKubeJSRecipe implements ICoun
         this(((ShapelessRecipeAccessor) kubeJSRecipe).getShapelessRecipe(), kubeJSRecipe.kjs$getIngredientActions(), kubeJSRecipe.kjs$getModifyResult(), kubeJSRecipe.kjs$getStage(), index2count);
     }
 
-    public CountShapelessRecipe(ShapelessRecipe original, List<IngredientAction> ingredientActions, @Nullable ModifyRecipeResultCallback modifyResult, String stage, Int2IntOpenHashMap index2count) {
-        super(original, ingredientActions, modifyResult, stage);
+    public CountShapelessRecipe(ShapelessRecipe original, List<IngredientAction> kjs$getIngredientActions, @Nullable ModifyRecipeResultCallback modifyResult, String stage, Int2IntOpenHashMap index2count) {
+        super(original, kjs$getIngredientActions, modifyResult, stage);
         index2count.defaultReturnValue(0);
         this.index2count = index2count;
     }
@@ -127,21 +132,59 @@ public class CountShapelessRecipe extends ShapelessKubeJSRecipe implements ICoun
         return index2count;
     }
 
-    public static class SerializerJS extends SerializerKJS implements ICountSerializer {
+    @Override
+    public @NotNull RecipeSerializer<?> getSerializer() {
+        return RecipeSerializerInit.SHAPELESS.get();
+    }
+
+    public static class Serializer implements ICountSerializer, RecipeSerializer<CountShapelessRecipe> {
+        private static final RecipeSerializer<ShapelessRecipe> SHAPELESS = UtilsJS.cast(RegistryInfo.RECIPE_SERIALIZER.getValue(new ResourceLocation("crafting_shapeless")));;
+        
         @Override
-        public @NotNull ShapelessKubeJSRecipe fromJson(ResourceLocation id, JsonObject jsonObject) {
-            return new CountShapelessRecipe(super.fromJson(id, jsonObject), fromJson(jsonObject));
+        public @NotNull CountShapelessRecipe fromJson(ResourceLocation id, JsonObject json) {
+            ShapelessRecipe shapelessRecipe = SHAPELESS.fromJson(id, json);
+            List<IngredientAction> kjs$getIngredientActions = IngredientAction.parseList(json.get("kubejs:actions"));
+            ModifyRecipeResultCallback modifyResult = null;
+            if (json.has("kubejs:modify_result")) {
+                modifyResult = RecipesEventJS.MODIFY_RESULT_CALLBACKS.get(id);
+            }
+
+            String stage = GsonHelper.getAsString(json, "kubejs:stage", "");
+            ShapelessKubeJSRecipe jsRecipe = new ShapelessKubeJSRecipe(shapelessRecipe, kjs$getIngredientActions, modifyResult, stage);
+            return new CountShapelessRecipe(jsRecipe, fromJson(json));  
         }
 
         @Override
-        public ShapelessKubeJSRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buf) {
-            return new CountShapelessRecipe(super.fromNetwork(id, buf), fromNetwork(buf));
+        public CountShapelessRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buf) {
+            ShapelessRecipe shapelessRecipe = SHAPELESS.fromNetwork(id, buf);
+            int flags = buf.readByte();
+            List<IngredientAction> kjs$getIngredientActions = (flags & 1) != 0 ? IngredientAction.readList(buf) : List.of();
+            String stage = (flags & 2) != 0 ? buf.readUtf() : "";
+            ShapelessKubeJSRecipe jsRecipe =  new ShapelessKubeJSRecipe(shapelessRecipe, kjs$getIngredientActions, (ModifyRecipeResultCallback)null, stage);
+            return new CountShapelessRecipe(jsRecipe, fromNetwork(buf));
         }
 
         @Override
-        public void toNetwork(FriendlyByteBuf buf, ShapelessKubeJSRecipe recipe) {
-            super.toNetwork(buf, recipe);
-            tooNetwork(buf, recipe);
+        public void toNetwork(FriendlyByteBuf buf, CountShapelessRecipe r) {
+            SHAPELESS.toNetwork(buf, r);
+            int flags = 0;
+            if (r.kjs$getIngredientActions() != null && !r.kjs$getIngredientActions().isEmpty()) {
+                flags |= 1;
+            }
+
+            if (!r.kjs$getStage().isEmpty()) {
+                flags |= 2;
+            }
+
+            buf.writeByte(flags);
+            if (r.kjs$getIngredientActions() != null && !r.kjs$getIngredientActions().isEmpty()) {
+                IngredientAction.writeList(buf, r.kjs$getIngredientActions());
+            }
+
+            if (!r.kjs$getStage().isEmpty()) {
+                buf.writeUtf(r.kjs$getStage());
+            }
+            tooNetwork(buf, r);
         }
     }
 }

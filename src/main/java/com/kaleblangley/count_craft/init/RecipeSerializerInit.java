@@ -14,8 +14,8 @@ import java.util.function.Supplier;
 public class RecipeSerializerInit {
     public static final DeferredRegister<RecipeSerializer<?>> REGISTER = DeferredRegister.create(ForgeRegistries.RECIPE_SERIALIZERS, CountCraft.MODID);
 
-    public static Supplier<RecipeSerializer<?>> SHAPED = REGISTER.register("shaped", CountShapedRecipe.SerializerJS::new);
-    public static Supplier<RecipeSerializer<?>> SHAPELESS = REGISTER.register("shapeless", CountShapelessRecipe.SerializerJS::new);
+    public static Supplier<RecipeSerializer<?>> SHAPED = REGISTER.register("shaped", CountShapedRecipe.Serializer::new);
+    public static Supplier<RecipeSerializer<?>> SHAPELESS = REGISTER.register("shapeless", CountShapelessRecipe.Serializer::new);
 
     public static void init(IEventBus iEventBus) {
         REGISTER.register(iEventBus);
