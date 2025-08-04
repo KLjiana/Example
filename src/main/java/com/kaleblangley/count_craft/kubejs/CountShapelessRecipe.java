@@ -133,12 +133,17 @@ public class CountShapelessRecipe extends ShapelessKubeJSRecipe implements ICoun
     }
 
     @Override
+    public NonNullList<Ingredient> getIngredientList() {
+        return getIngredients();
+    }
+
+    @Override
     public @NotNull RecipeSerializer<?> getSerializer() {
         return RecipeSerializerInit.SHAPELESS.get();
     }
 
     public static class Serializer implements ICountSerializer, RecipeSerializer<CountShapelessRecipe> {
-        private static final RecipeSerializer<ShapelessRecipe> SHAPELESS = UtilsJS.cast(RegistryInfo.RECIPE_SERIALIZER.getValue(new ResourceLocation("crafting_shapeless")));;
+        private static final RecipeSerializer<ShapelessRecipe> SHAPELESS = UtilsJS.cast(RegistryInfo.RECIPE_SERIALIZER.getValue(new ResourceLocation("crafting_shapeless")));
         
         @Override
         public @NotNull CountShapelessRecipe fromJson(ResourceLocation id, JsonObject json) {

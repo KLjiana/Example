@@ -68,6 +68,11 @@ public class CountShapedRecipe extends ShapedKubeJSRecipe implements ICountRecip
     }
 
     @Override
+    public NonNullList<Ingredient> getIngredientList() {
+        return getIngredients();
+    }
+
+    @Override
     public @NotNull RecipeSerializer<?> getSerializer() {
         return RecipeSerializerInit.SHAPED.get();
     }

@@ -20,7 +20,7 @@ public class DrawableHandler {
             return;
         }
 
-        List<ItemStack> itemStacks = countRecipe.getIngredients().stream()
+        List<ItemStack> itemStacks = countRecipe.getIngredientList().stream()
                 .filter(ingredient -> ingredient.getItems().length >= 1)
                 .map(ingredient -> ingredient.getItems()[0].copy())
                 .toList();

@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public interface ICountSerializer {
         return index2count;
     }
 
-    default void tooNetwork(FriendlyByteBuf buf, CraftingRecipe recipe) {
+    default void tooNetwork(FriendlyByteBuf buf, Recipe<?> recipe) {
         if (recipe instanceof ICountRecipe countRecipe) {
             IntArrayList indexList = new IntArrayList(countRecipe.getIndex2count().keySet());
             IntArrayList countList = new IntArrayList(countRecipe.getIndex2count().values());

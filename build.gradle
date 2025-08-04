@@ -43,6 +43,8 @@ legacyForge {
             jvmArgument "-XX:+IgnoreUnrecognizedVMOptions"
             jvmArgument "-XX:+AllowEnhancedClassRedefinition"
             jvmArgument "-XX:HotswapAgent=fatjar"
+
+            logLevel = org.slf4j.event.Level.DEBUG
         }
     }
 

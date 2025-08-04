@@ -16,7 +16,7 @@ import java.util.function.Predicate;
 public interface ICountRecipe {
     Int2IntOpenHashMap getIndex2count();
 
-    NonNullList<Ingredient> getIngredients();
+    NonNullList<Ingredient> getIngredientList();
 
     default IntList getFrontEmpty(CraftingContainer container) {
         IntArrayList list = new IntArrayList();

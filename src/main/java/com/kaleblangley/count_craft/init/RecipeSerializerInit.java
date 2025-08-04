@@ -3,6 +3,7 @@ package com.kaleblangley.count_craft.init;
 import com.kaleblangley.count_craft.CountCraft;
 import com.kaleblangley.count_craft.kubejs.CountShapedRecipe;
 import com.kaleblangley.count_craft.kubejs.CountShapelessRecipe;
+import com.kaleblangley.count_craft.kubejs.CountSmithingTransformRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -16,6 +17,7 @@ public class RecipeSerializerInit {
 
     public static Supplier<RecipeSerializer<?>> SHAPED = REGISTER.register("shaped", CountShapedRecipe.Serializer::new);
     public static Supplier<RecipeSerializer<?>> SHAPELESS = REGISTER.register("shapeless", CountShapelessRecipe.Serializer::new);
+    public static Supplier<RecipeSerializer<?>> SMITHING_TRANSFORM = REGISTER.register("smithing_transform", CountSmithingTransformRecipe.Serializer::new);
 
     public static void init(IEventBus iEventBus) {
         REGISTER.register(iEventBus);

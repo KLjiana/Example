@@ -10,5 +10,6 @@ public class JSPlugin extends KubeJSPlugin {
     public void registerRecipeSchemas(RegisterRecipeSchemasEvent event) {
         event.register(new ResourceLocation("count_craft:shapeless"), CountShapelessRecipeSchema.SCHEMA);
         event.register(new ResourceLocation("count_craft:shaped"), CountShapedRecipeSchema.SCHEMA);
+        event.register(new ResourceLocation("count_craft:smithing_transform"), CountSmithingTransformRecipeSchema.SCHEMA);
     }
 }

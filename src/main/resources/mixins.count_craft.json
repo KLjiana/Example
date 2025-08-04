@@ -6,7 +6,8 @@
   "mixins": [
     "ShapedKubeJSRecipeAccessor",
     "ShapedRecipeJSAccessor",
-    "ShapelessKubeJSRecipeMixin"
+    "ShapelessKubeJSRecipeMixin",
+    "SmithingMenuMixin"
   ],
   "client": [
     "RecipeLayoutMixin",
