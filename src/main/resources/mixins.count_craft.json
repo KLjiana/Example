@@ -16,5 +16,5 @@
   "injectors": {
     "defaultRequire": 1
   },
-  "refmap": "mixins.count_craft.refmap.json"
+  "refmap": "count_craft.refmap.json"
 }
