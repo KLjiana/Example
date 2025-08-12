@@ -42,6 +42,7 @@ neoForge {
         server {
             server()
             programArgument '--nogui'
+            setGameDirectory(file("server"))
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
@@ -59,6 +60,14 @@ neoForge {
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.DEBUG
+
+            jvmArgument "-XX:+IgnoreUnrecognizedVMOptions"
+            jvmArgument "-XX:+AllowEnhancedClassRedefinition"
+            jvmArgument "-XX:HotswapAgent=fatjar"
+
+            if (isRunningInIdea()) {
+                systemProperty "terminal.jline", "true"
+            }
         }
     }
 
@@ -120,4 +129,8 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+
+def isRunningInIdea() {
+    return System.getProperty("idea.active") == "true"
 }
