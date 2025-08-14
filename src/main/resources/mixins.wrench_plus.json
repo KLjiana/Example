@@ -1,14 +1,16 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "com.kaleblangley.examples.mixin",
+  "package": "com.kaleblangley.wrench_plus.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "AllItemsMixin",
+    "WrenchItemMixin"
   ],
   "client": [
   ],
   "injectors": {
     "defaultRequire": 1
   },
-  "refmap": "mixins.examples.refmap.json"
+  "refmap": "mixins.wrench_plus.refmap.json"
 }
