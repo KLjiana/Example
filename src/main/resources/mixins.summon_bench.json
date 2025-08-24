@@ -10,5 +10,5 @@
   "injectors": {
     "defaultRequire": 1
   },
-  "refmap": "mixins.examples.refmap.json"
+  "refmap": "mixins.summon_bench.refmap.json"
 }
