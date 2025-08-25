@@ -1,6 +1,7 @@
 package com.kaleblangley.summon_bench.common.block;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.example.registry.BlockEntityRegistry;
 
-public class SummonBenchBlock extends Block implements EntityBlock {
+public class SummonBenchBlock extends BaseEntityBlock implements EntityBlock {
     public SummonBenchBlock() {
         super(
                 Properties.of()
