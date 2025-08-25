@@ -11,7 +11,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class MenuInit {
     private static final DeferredRegister<MenuType<?>> MENU_TYPE = DeferredRegister.create(ForgeRegistries.MENU_TYPES, SummonBench.MODID);
-    public static final RegistryObject<MenuType<?>> SUMMON_MENU = MENU_TYPE.register("summon_menu", () -> IForgeMenuType.create(SummonMenu::new));
+    public static final RegistryObject<MenuType<SummonMenu>> SUMMON_MENU = MENU_TYPE.register("summon_menu", () -> IForgeMenuType.create(SummonMenu::new));
 
     public static void init(IEventBus bus) {
         MENU_TYPE.register(bus);

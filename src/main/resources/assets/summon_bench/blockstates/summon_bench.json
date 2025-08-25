@@ -1,5 +1,7 @@
 {
   "variants": {
-    "": { "model": "summon_bench:block/summon_bench" }
+    "": {
+      "model": "summon_bench:block/summon_bench"
+    }
   }
 }

@@ -6,16 +6,19 @@ import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class SummonMenu extends AbstractContainerMenu {
     private final Container summon;
 
     public SummonMenu(int containerId, Container container, FriendlyByteBuf extraData) {
+        super(MenuInit.SUMMON_MENU.get(), containerId);
+        this.summon = null;
+    }
+
+    public SummonMenu(int containerId, Container container) {
         super(MenuInit.SUMMON_MENU.get(), containerId);
         this.summon = new SimpleContainer(1);
         Slot summonSlot = new Slot(this.summon, 0, 100, 100);

@@ -1,10 +1,16 @@
 package com.kaleblangley.summon_bench.common.block.entity;
 
 import com.kaleblangley.summon_bench.common.init.BlockEntityInit;
+import com.kaleblangley.summon_bench.common.menu.SummonMenu;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoBlockEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -12,8 +18,8 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class SummonBenchBlockEntity extends BlockEntity implements GeoBlockEntity {
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+public class SummonBenchBlockEntity extends BaseContainerBlockEntity implements GeoBlockEntity {
+    private final AnimatableInstanceCache CACHE = GeckoLibUtil.createInstanceCache(this);
 
     private static final RawAnimation STOP = RawAnimation.begin().thenPlay("stop");
     private static final RawAnimation CLOSE = RawAnimation.begin().thenPlay("close");
@@ -38,6 +44,56 @@ public class SummonBenchBlockEntity extends BlockEntity implements GeoBlockEntit
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
+        return CACHE;
+    }
+
+    @Override
+    protected Component getDefaultName() {
+        return null;
+    }
+
+    @Override
+    protected AbstractContainerMenu createMenu(int containerId, @NotNull Inventory inventory) {
+        return new SummonMenu(containerId, inventory);
+    }
+
+    @Override
+    public int getContainerSize() {
+        return 0;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
+    public ItemStack getItem(int slot) {
+        return null;
+    }
+
+    @Override
+    public ItemStack removeItem(int slot, int amount) {
+        return null;
+    }
+
+    @Override
+    public ItemStack removeItemNoUpdate(int slot) {
+        return null;
+    }
+
+    @Override
+    public void setItem(int slot, ItemStack stack) {
+
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        return false;
+    }
+
+    @Override
+    public void clearContent() {
+
     }
 }
