@@ -4,6 +4,7 @@ import com.kaleblangley.summon_bench.common.init.BlockEntityInit;
 import com.kaleblangley.summon_bench.common.menu.SummonMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -49,7 +50,7 @@ public class SummonBenchBlockEntity extends BaseContainerBlockEntity implements 
 
     @Override
     protected Component getDefaultName() {
-        return null;
+        return Component.literal("Summon Bench");
     }
 
     @Override
@@ -83,17 +84,16 @@ public class SummonBenchBlockEntity extends BaseContainerBlockEntity implements 
     }
 
     @Override
-    public void setItem(int slot, ItemStack stack) {
+    public void setItem(int slot, @NotNull ItemStack stack) {
 
     }
 
     @Override
-    public boolean stillValid(Player player) {
-        return false;
+    public boolean stillValid(@NotNull Player player) {
+        return Container.stillValidBlockEntity(this, player);
     }
 
     @Override
     public void clearContent() {
-
     }
 }
