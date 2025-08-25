@@ -54,18 +54,18 @@ public class ConfigLoader {
         
         SummonConfig.SummonEntry exampleEntry = new SummonConfig.SummonEntry();
         
-        SummonConfig.Entity entity = new SummonConfig.Entity();
-        entity.setId("minecraft:zombie");
-        entity.setNbt("");
-        exampleEntry.setEntity(entity);
+        SummonConfig.EntityRecord entityRecord = new SummonConfig.EntityRecord();
+        entityRecord.setId("minecraft:zombie");
+        entityRecord.setNbt("");
+        exampleEntry.setEntity(entityRecord);
         
-        SummonConfig.Item item = new SummonConfig.Item();
-        item.setId("minecraft:rotten_flesh");
-        item.setNbt("");
-        exampleEntry.setItem(item);
-        
+        SummonConfig.ItemRecord itemRecord = new SummonConfig.ItemRecord();
+        itemRecord.setId("minecraft:rotten_flesh");
+        itemRecord.setCount(1);
+        itemRecord.setNbt("");
+        exampleEntry.setItem(itemRecord);
+
         defaultConfig.getSummonList().add(exampleEntry);
-        
         return defaultConfig;
     }
     
