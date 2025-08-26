@@ -46,7 +46,7 @@ public class SummonBenchBlockEntity extends BaseContainerBlockEntity implements 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return CACHE;
-    }
+    }   
 
     @Override
     protected Component getDefaultName() {
