@@ -12,11 +12,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ConfigLoader {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static SummonConfig config;
-    
+
+    public static void resetList(List<SummonConfig.SummonEntry> summon_list) {
+        config.setSummonList(summon_list);
+    }
+
     public static void loadConfig() {
         Path configPath = FMLLoader.getGamePath().resolve("config").resolve("summon_config.json");
         

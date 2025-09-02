@@ -5,6 +5,7 @@ import com.kaleblangley.summon_bench.common.init.BlockEntityInit;
 import com.kaleblangley.summon_bench.common.init.BlockInit;
 import com.kaleblangley.summon_bench.common.init.ItemInit;
 import com.kaleblangley.summon_bench.common.init.MenuInit;
+import com.kaleblangley.summon_bench.network.NetworkHandler;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -23,6 +24,7 @@ public class SummonBench {
 
         GeckoLib.initialize();
 
+        NetworkHandler.register();
         ConfigLoader.loadConfig();
 
         BlockInit.init(modBusEvent);

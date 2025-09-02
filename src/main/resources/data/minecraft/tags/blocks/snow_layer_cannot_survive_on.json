@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id":"summon_bench:summon_bench",
+      "required": false
+    }
+  ]
+}

@@ -3,6 +3,7 @@ package com.kaleblangley.summon_bench.common.block;
 import com.kaleblangley.summon_bench.common.init.BlockEntityInit;
 import com.kaleblangley.summon_bench.common.init.BlockInit;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
@@ -15,6 +16,7 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.example.registry.BlockEntityRegistry;
@@ -34,7 +36,6 @@ public class SummonBenchBlock extends BaseEntityBlock implements EntityBlock {
         return BlockEntityInit.SUMMON_BENCH.get().create(pos, state);
     }
 
-
     @Override
     public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
@@ -47,7 +48,7 @@ public class SummonBenchBlock extends BaseEntityBlock implements EntityBlock {
         } else {
             MenuProvider menuProvider = this.getMenuProvider(state, level, pos);
             if (menuProvider!= null){
-                player.openMenu(menuProvider);
+                NetworkHooks.openScreen((ServerPlayer) player, menuProvider, pos);
             }
             return InteractionResult.CONSUME;
         }

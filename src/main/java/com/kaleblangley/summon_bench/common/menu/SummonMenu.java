@@ -1,6 +1,9 @@
 package com.kaleblangley.summon_bench.common.menu;
 
+import com.kaleblangley.summon_bench.common.block.entity.SummonBenchBlockEntity;
 import com.kaleblangley.summon_bench.common.init.MenuInit;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -8,30 +11,37 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.loading.FMLLoader;
 import org.jetbrains.annotations.NotNull;
 
 public class SummonMenu extends AbstractContainerMenu {
-    private final Container summon;
+    public final Container summon;
+    public final BlockPos entityPos;
 
     public SummonMenu(int containerId, Container container, FriendlyByteBuf extraData) {
-        super(MenuInit.SUMMON_MENU.get(), containerId);
-        this.summon = null;
+        this(containerId, container, new SimpleContainer(1), extraData.readBlockPos());
     }
 
-    public SummonMenu(int containerId, Container container) {
+    public SummonMenu(int containerId, Container inventory, Container summonEntity, BlockPos blockPos) {
         super(MenuInit.SUMMON_MENU.get(), containerId);
-        this.summon = new SimpleContainer(1);
-        Slot summonSlot = new Slot(this.summon, 0, 100, 100);
+        this.summon = summonEntity;
+        this.entityPos = blockPos;
+        Slot summonSlot = new Slot(this.summon, 0, 80, 44);
         this.addSlot(summonSlot);
 
         //Player slot
-        for(int k = 0; k < 3; ++k) {
-            for(int l = 0; l < 9; ++l) {
-                this.addSlot(new Slot(container, l + k * 9 + 9, 36 + l * 18, 137 + k * 18));
+        int startX = 5;
+        int startY = 122;
+        int slotX = 19;
+        int slotY = 19;
+        for (int k = 0; k < 3; ++k) {
+            for (int l = 0; l < 9; ++l) {
+                this.addSlot(new Slot(inventory, l + k * 9 + 9, startX + l * slotX, startY + k * slotY));
             }
         }
-        for(int i1 = 0; i1 < 9; ++i1) {
-            this.addSlot(new Slot(container, i1, 36 + i1 * 18, 195));
+        for (int i1 = 0; i1 < 9; ++i1) {
+            this.addSlot(new Slot(inventory, i1, startX + i1 * slotX, startY + (slotY * 3 + 6)));
         }
     }
 

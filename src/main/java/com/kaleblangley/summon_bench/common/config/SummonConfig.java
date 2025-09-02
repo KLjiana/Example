@@ -1,10 +1,12 @@
 package com.kaleblangley.summon_bench.common.config;
 
+import com.google.gson.annotations.SerializedName;
 import com.kaleblangley.summon_bench.SummonBench;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -13,12 +15,21 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SummonConfig {
-    private List<SummonEntry> summon_list;
+    private List<SummonEntry> summon_list = new ArrayList<>();
 
     public SummonConfig() {
+    }
+
+    public SummonConfig(FriendlyByteBuf byteBuf) {
+        this.summon_list = byteBuf.readList(SummonEntry::new);
+    }
+
+    public void writeByte(FriendlyByteBuf byteBuf) {
+        byteBuf.writeCollection(summon_list, (byteBuf1, summonEntry) -> summonEntry.writeByte(byteBuf1));
     }
 
     public List<SummonEntry> getSummonList() {
@@ -29,39 +40,81 @@ public class SummonConfig {
         this.summon_list = summon_list;
     }
 
+    public List<SummonEntry> getSummonEntity(ItemStack itemStack) {
+        return this.summon_list.stream().filter(summonEntry -> {
+            ItemStack entryItem = summonEntry.getItem();
+            return ItemStack.isSameItemSameTags(itemStack, entryItem);
+        }).toList();
+    }
+
     public static class SummonEntry {
+        @SerializedName(value = "entity", alternate = {"entityType"})
         private EntityRecord entityRecord;
+        @SerializedName(value = "item", alternate = {"itemStack"})
         private ItemRecord itemRecord;
 
         public SummonEntry() {
         }
 
-        public Entity summonEntity(ServerLevel level, BlockPos pos) throws CommandSyntaxException {
-            return entityRecord.getEntity(level, pos);
+        public SummonEntry(FriendlyByteBuf byteBuf) {
+            this.entityRecord = new EntityRecord(byteBuf);
+            this.itemRecord = new ItemRecord(byteBuf);
+        }
+
+        public void writeByte(FriendlyByteBuf byteBuf) {
+            entityRecord.writeByte(byteBuf);
+            itemRecord.writeByte(byteBuf);
+        }
+
+        public boolean summonEntity(ServerLevel level, BlockPos pos) {
+            return entityRecord.summonEntity(level, pos);
         }
 
         public void setEntity(EntityRecord entityRecord) {
             this.entityRecord = entityRecord;
         }
 
-        public ItemStack getItem() throws CommandSyntaxException {
-            return itemRecord.getItem();
+        public ItemStack getItem() {
+            return itemRecord.getItemStack();
         }
 
         public void setItem(ItemRecord itemRecord) {
             this.itemRecord = itemRecord;
         }
+
+        @Override
+        public String toString() {
+            return "SummonEntry{" +
+                    "entityRecord=" + entityRecord.toString() +
+                    ", itemRecord=" + itemRecord.toString() +
+                    '}';
+        }
     }
 
-    public static CompoundTag parseTag(String nbt) throws CommandSyntaxException {
-        return TagParser.parseTag(nbt).copy();
+    public static CompoundTag parseTag(String nbt) {
+        try {
+            return TagParser.parseTag(nbt).copy();
+        } catch (CommandSyntaxException e) {
+            SummonBench.LOGGER.error("Can't parse {} nbt", nbt);
+        }
+        return new CompoundTag();
     }
 
     public static class EntityRecord {
         private String id;
-        private String nbt;
+        private String nbt = "{}";
 
         public EntityRecord() {
+        }
+
+        public EntityRecord(FriendlyByteBuf byteBuf) {
+            this.id = byteBuf.readUtf();
+            this.nbt = byteBuf.readUtf();
+        }
+
+        public void writeByte(FriendlyByteBuf byteBuf) {
+            byteBuf.writeUtf(id);
+            byteBuf.writeUtf(nbt);
         }
 
         public String getId() {
@@ -80,7 +133,7 @@ public class SummonConfig {
             this.nbt = nbt;
         }
 
-        public Entity getEntity(ServerLevel level, BlockPos pos) throws CommandSyntaxException {
+        public boolean summonEntity(ServerLevel level, BlockPos pos) {
             CompoundTag compoundTag = parseTag(nbt);
             compoundTag.putString("id", id);
 
@@ -91,18 +144,38 @@ public class SummonConfig {
             if (entity == null) {
                 SummonBench.LOGGER.warn("Can't find entity {} with tag {}", id, nbt);
             } else {
-                level.tryAddFreshEntityWithPassengers(entity);
+                return level.tryAddFreshEntityWithPassengers(entity);
             }
-            return entity;
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "EntityRecord{" +
+                    "id='" + id + '\'' +
+                    ", nbt='" + nbt + '\'' +
+                    '}';
         }
     }
 
     public static class ItemRecord {
         private String id;
         private int count = 1;
-        private String nbt;
+        private String nbt = "{}";
 
         public ItemRecord() {
+        }
+
+        public ItemRecord(FriendlyByteBuf byteBuf) {
+            this.id = byteBuf.readUtf();
+            this.count = byteBuf.readInt();
+            this.nbt = byteBuf.readUtf();
+        }
+
+        public void writeByte(FriendlyByteBuf byteBuf) {
+            byteBuf.writeUtf(id);
+            byteBuf.writeInt(count);
+            byteBuf.writeUtf(nbt);
         }
 
         public String getId() {
@@ -129,14 +202,24 @@ public class SummonConfig {
             return count;
         }
 
-        public ItemStack getItem() throws CommandSyntaxException {
+        public ItemStack getItemStack() {
             Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));
             if (item == null) {
                 SummonBench.LOGGER.warn("Can't find item {}x {} with {}", count, id, nbt);
                 return ItemStack.EMPTY;
             } else {
-                return new ItemStack(item, count, parseTag(nbt));
+                CompoundTag compoundTag = parseTag(nbt);
+                return new ItemStack(item, count, compoundTag);
             }
+        }
+
+        @Override
+        public String toString() {
+            return "ItemRecord{" +
+                    "id='" + id + '\'' +
+                    ", count=" + count +
+                    ", nbt='" + nbt + '\'' +
+                    '}';
         }
     }
 }
