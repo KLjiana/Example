@@ -17,7 +17,13 @@ public record ConfigSyncS2CPacket(SummonConfig entries) {
     }
 
     public static void handle(ConfigSyncS2CPacket packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> ConfigLoader.resetList(packet.entries.getSummonList()
-        ));
+        ctx.get().enqueueWork(
+                () -> {
+                    SummonConfig config = ConfigLoader.getConfig();
+                    SummonConfig serverConfig = packet.entries;
+                    config.setBlockUnbrokenDistance(serverConfig.getBlockUnbrokenDistance());
+                    config.setSummonList(serverConfig.getSummonList());
+                }
+        );
     }
 }

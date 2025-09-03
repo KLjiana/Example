@@ -18,10 +18,6 @@ public class ConfigLoader {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static SummonConfig config;
 
-    public static void resetList(List<SummonConfig.SummonEntry> summon_list) {
-        config.setSummonList(summon_list);
-    }
-
     public static void loadConfig() {
         Path configPath = FMLLoader.getGamePath().resolve("config").resolve("summon_config.json");
         
@@ -56,6 +52,7 @@ public class ConfigLoader {
     private static SummonConfig createDefaultConfig() {
         SummonConfig defaultConfig = new SummonConfig();
         defaultConfig.setSummonList(new ArrayList<>());
+        defaultConfig.setBlockUnbrokenDistance(20);
         
         SummonConfig.SummonEntry exampleEntry = new SummonConfig.SummonEntry();
         

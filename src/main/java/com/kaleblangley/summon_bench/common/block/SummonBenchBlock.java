@@ -27,9 +27,11 @@ public class SummonBenchBlock extends BaseEntityBlock implements EntityBlock {
                 Properties.of()
                         .strength(-1.0F)
                         .noLootTable()
+                        .lightLevel(v -> 1)
                         .isValidSpawn((blockState, blockGetter, blockPos, entityType) -> false)
         );
     }
+
 
     @Override
     public @Nullable BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
@@ -47,7 +49,7 @@ public class SummonBenchBlock extends BaseEntityBlock implements EntityBlock {
             return InteractionResult.SUCCESS;
         } else {
             MenuProvider menuProvider = this.getMenuProvider(state, level, pos);
-            if (menuProvider!= null){
+            if (menuProvider != null) {
                 NetworkHooks.openScreen((ServerPlayer) player, menuProvider, pos);
             }
             return InteractionResult.CONSUME;

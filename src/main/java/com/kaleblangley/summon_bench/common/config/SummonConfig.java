@@ -19,16 +19,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SummonConfig {
+    private int block_unbroken_distance = 20;
     private List<SummonEntry> summon_list = new ArrayList<>();
 
     public SummonConfig() {
     }
 
     public SummonConfig(FriendlyByteBuf byteBuf) {
+        this.block_unbroken_distance = byteBuf.readInt();
         this.summon_list = byteBuf.readList(SummonEntry::new);
     }
 
     public void writeByte(FriendlyByteBuf byteBuf) {
+        byteBuf.writeInt(block_unbroken_distance);
         byteBuf.writeCollection(summon_list, (byteBuf1, summonEntry) -> summonEntry.writeByte(byteBuf1));
     }
 
@@ -38,6 +41,14 @@ public class SummonConfig {
 
     public void setSummonList(List<SummonEntry> summon_list) {
         this.summon_list = summon_list;
+    }
+
+    public int getBlockUnbrokenDistance() {
+        return block_unbroken_distance;
+    }
+
+    public void setBlockUnbrokenDistance(int block_unbroken_distance) {
+        this.block_unbroken_distance = block_unbroken_distance;
     }
 
     public List<SummonEntry> getSummonEntity(ItemStack itemStack) {
