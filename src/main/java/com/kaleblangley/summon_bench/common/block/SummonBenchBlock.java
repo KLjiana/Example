@@ -27,6 +27,7 @@ public class SummonBenchBlock extends BaseEntityBlock implements EntityBlock {
                 Properties.of()
                         .strength(-1.0F)
                         .noLootTable()
+                        .noOcclusion()
                         .lightLevel(v -> 1)
                         .isValidSpawn((blockState, blockGetter, blockPos, entityType) -> false)
         );
