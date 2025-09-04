@@ -1,39 +1,29 @@
 package com.kaleblangley.summon_bench.client.screen;
 
 import com.kaleblangley.summon_bench.SummonBench;
-import com.kaleblangley.summon_bench.common.block.entity.SummonBenchBlockEntity;
 import com.kaleblangley.summon_bench.common.config.ConfigLoader;
-import com.kaleblangley.summon_bench.common.config.SummonConfig;
 import com.kaleblangley.summon_bench.common.menu.SummonMenu;
 import com.kaleblangley.summon_bench.network.NetworkHandler;
 import com.kaleblangley.summon_bench.network.c2s.SummonEntityC2SPacket;
-import com.kaleblangley.summon_bench.network.s2c.ConfigSyncS2CPacket;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.datafixers.util.Pair;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
 public class SummonScreen extends AbstractContainerScreen<SummonMenu> {
     public static final ResourceLocation SLOT = new ResourceLocation(SummonBench.MODID, "textures/gui/summon_slot.png");
     public static final ResourceLocation MOUTH = new ResourceLocation(SummonBench.MODID, "textures/gui/summon_mouth.png");
-    private static final int SCREEN_WIDTH = 512;
-    private static final int SCREEN_HEIGHT = 512;
+    private static final int MOUTH_WIDTH = 512;
+    private static final int MOUTH_HEIGHT = 512;
+    private static final int SLOT_WIDTH = 186;
+    private static final int SLOT_HEIGHT = 95;
     private static final float MOUTH_SCALE = 0.4f;
-    private static final float SLOT_SCALE = 0.5f;
+    private static final float SLOT_SCALE = 1.0f;
     private int centerX;
     private int centerY;
 
@@ -73,16 +63,16 @@ public class SummonScreen extends AbstractContainerScreen<SummonMenu> {
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        float mouthX = Math.round(centerX - (float) SCREEN_WIDTH / 2 * MOUTH_SCALE + 5);
-        float mouthY = Math.round(centerY - (float) SCREEN_HEIGHT / 2 * MOUTH_SCALE - 30);
+        float mouthX = Math.round(centerX - (float) MOUTH_WIDTH / 2 * MOUTH_SCALE + 5);
+        float mouthY = Math.round(centerY - (float) MOUTH_HEIGHT / 2 * MOUTH_SCALE - 30);
         scaleRender(guiGraphics, mouthX, mouthY, MOUTH_SCALE, (x1, y2) -> {
-            guiGraphics.blit(MOUTH, x1, y2, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT);
+            guiGraphics.blit(MOUTH, x1, y2, 0, 0, MOUTH_WIDTH, MOUTH_HEIGHT, MOUTH_WIDTH, MOUTH_HEIGHT);
         });
 
-        float slotX = Math.round(centerX - (float) SCREEN_WIDTH / 2 * SLOT_SCALE + 5);
-        float slotY = Math.round(centerY - (float) SCREEN_HEIGHT / 2 * SLOT_SCALE);
+        float slotX = Math.round(centerX - (float) SLOT_WIDTH / 2 * SLOT_SCALE + 5);
+        float slotY = Math.round(centerY - (float) SLOT_HEIGHT / 2 * SLOT_SCALE + 80);
         scaleRender(guiGraphics, slotX, slotY, SLOT_SCALE, (x1, y2) -> {
-            guiGraphics.blit(SLOT, x1, y2, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT);
+            guiGraphics.blit(SLOT, x1, y2, 0, 0, SLOT_WIDTH, SLOT_HEIGHT, SLOT_WIDTH, SLOT_HEIGHT);
         });
     }
 

@@ -32,9 +32,9 @@ public class SummonMenu extends AbstractContainerMenu {
 
         //Player slot
         int startX = 5;
-        int startY = 122;
-        int slotX = 19;
-        int slotY = 19;
+        int startY = 123;
+        int slotX = 20;
+        int slotY = 20;
         for (int k = 0; k < 3; ++k) {
             for (int l = 0; l < 9; ++l) {
                 this.addSlot(new Slot(inventory, l + k * 9 + 9, startX + l * slotX, startY + k * slotY));
