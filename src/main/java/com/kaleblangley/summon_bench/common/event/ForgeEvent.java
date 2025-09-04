@@ -17,6 +17,7 @@ import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -40,49 +41,49 @@ public class ForgeEvent {
 
     @SubscribeEvent
     public static void entityBrokenBlock(LivingDestroyBlockEvent event) {
-        if (checkBlockBreak(event.getPos(), event.getEntity().level())) {
+        if (checkBlock(event.getState(), event.getPos(), event.getEntity().level())) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
     public static void playerBrokenBlock(BlockEvent.BreakEvent event) {
-        if (checkBlockBreak(event.getPos(), event.getLevel())) {
+        if (checkBlock(event.getState(), event.getPos(), event.getLevel())) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
     public static void entityPlaceBlock(BlockEvent.EntityPlaceEvent event) {
-        if (checkBlockBreak(event.getPos(), event.getLevel())) {
+        if (checkBlock(event.getPlacedBlock(), event.getPos(), event.getLevel())) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
     public static void fluidPlaceBlock(BlockEvent.FluidPlaceBlockEvent event) {
-        if (checkBlockBreak(event.getPos(), event.getLevel())) {
+        if (checkBlock(null, event.getPos(), event.getLevel())) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
     public static void farmlandPlaceBlock(BlockEvent.FarmlandTrampleEvent event) {
-        if (checkBlockBreak(event.getPos(), event.getLevel())) {
+        if (checkBlock(null, event.getPos(), event.getLevel())) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
     public static void portalPlaceBlock(BlockEvent.PortalSpawnEvent event) {
-        if (checkBlockBreak(event.getPos(), event.getLevel())) {
+        if (checkBlock(null, event.getPos(), event.getLevel())) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
     public static void toolPlaceBlock(BlockEvent.BlockToolModificationEvent event) {
-        if (checkBlockBreak(event.getPos(), event.getLevel())) {
+        if (checkBlock(null, event.getPos(), event.getLevel())) {
             event.setCanceled(true);
         }
     }
@@ -90,12 +91,15 @@ public class ForgeEvent {
 
     @SubscribeEvent
     public static void tntEvent(ExplosionEvent.Start event) {
-        if (checkBlockBreak(BlockPos.containing(event.getExplosion().getPosition()), event.getLevel())) {
+        if (checkBlock(null, BlockPos.containing(event.getExplosion().getPosition()), event.getLevel())) {
             event.setCanceled(true);
         }
     }
 
-    private static boolean checkBlockBreak(BlockPos blockPos, BlockGetter getter) {
+    private static boolean checkBlock(@Nullable BlockState placeBlock, BlockPos blockPos, BlockGetter getter) {
+        if (placeBlock != null && placeBlock.is(BlockInit.SUMMON_BENCH.get())) {
+            return false;
+        }
         int unbrokenDistance = ConfigLoader.getConfig().getBlockUnbrokenDistance();
         AABB aabb = new AABB(blockPos.offset(unbrokenDistance, unbrokenDistance, unbrokenDistance), blockPos.offset(-unbrokenDistance, -unbrokenDistance, -unbrokenDistance));
         Optional<BlockState> hasBench = getter.getBlockStates(aabb).filter(blockState -> blockState.is(BlockInit.SUMMON_BENCH.get())).findFirst();

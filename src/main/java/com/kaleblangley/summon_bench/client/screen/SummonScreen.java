@@ -91,70 +91,14 @@ public class SummonScreen extends AbstractContainerScreen<SummonMenu> {
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
-        String text = "即将召唤%s!".formatted(getSummonName());
-        guiGraphics.drawCenteredString(font, text, centerX, centerY - 5, 0xFFFFFFFF);
+        Component text = Component.literal("即将召唤").append(getSummonName()).append("!");
+        guiGraphics.drawString(font, text, centerX - font.width(text) / 2, centerY - 5, 0xFFFFFFFF);
     }
 
-//    @Override
-//    protected void renderSlot(@NotNull GuiGraphics guiGraphics, @NotNull Slot slot) {
-//        int i = slot.x;
-//        int j = slot.y;
-//        ItemStack itemstack = slot.getItem();
-//        boolean flag = false;
-//        boolean flag1 = slot == this.clickedSlot && !this.draggingItem.isEmpty() && !this.isSplittingStack;
-//        ItemStack itemstack1 = this.menu.getCarried();
-//        String s = null;
-//        if (slot == this.clickedSlot && !this.draggingItem.isEmpty() && this.isSplittingStack && !itemstack.isEmpty()) {
-//            itemstack = itemstack.copyWithCount(itemstack.getCount() / 2);
-//        } else if (this.isQuickCrafting && this.quickCraftSlots.contains(slot) && !itemstack1.isEmpty()) {
-//            if (this.quickCraftSlots.size() == 1) {
-//                return;
-//            }
-//
-//            if (AbstractContainerMenu.canItemQuickReplace(slot, itemstack1, true) && this.menu.canDragTo(slot)) {
-//                flag = true;
-//                int k = Math.min(itemstack1.getMaxStackSize(), slot.getMaxStackSize(itemstack1));
-//                int l = slot.getItem().isEmpty() ? 0 : slot.getItem().getCount();
-//                int i1 = AbstractContainerMenu.getQuickCraftPlaceCount(this.quickCraftSlots, this.quickCraftingType, itemstack1) + l;
-//                if (i1 > k) {
-//                    i1 = k;
-//                    String var10000 = ChatFormatting.YELLOW.toString();
-//                    s = var10000 + k;
-//                }
-//
-//                itemstack = itemstack1.copyWithCount(i1);
-//            } else {
-//                this.quickCraftSlots.remove(slot);
-//                this.recalculateQuickCraftRemaining();
-//            }
-//        }
-//
-//        guiGraphics.pose().pushPose();
-//        guiGraphics.pose().translate(0.0F, 0.0F, 100.0F);
-//        if (itemstack.isEmpty() && slot.isActive()) {
-//            Pair<ResourceLocation, ResourceLocation> pair = slot.getNoItemIcon();
-//            if (pair != null) {
-//                TextureAtlasSprite textureatlassprite = this.minecraft.getTextureAtlas(pair.getFirst()).apply(pair.getSecond());
-//                guiGraphics.blit(i, j, 0, 8, 8, textureatlassprite);
-//                flag1 = true;
-//            }
-//        }
-//
-//        if (!flag1) {
-//            if (flag) {
-//                guiGraphics.fill(i, j, i + 8, j + 8, -2130706433);
-//            }
-//
-//            ItemStack finalItemstack = itemstack;
-//            scaleRender(guiGraphics, i, j, (x, y) -> guiGraphics.renderItem(finalItemstack, x, y, slot.x + slot.y * this.imageWidth));
-//            guiGraphics.renderItemDecorations(this.font, itemstack, i, j, s);
-//        }
-//
-//        guiGraphics.pose().popPose();
-//    }
-
-    private String getSummonName() {
-        return "kubejs";
+    private Component getSummonName() {
+        ItemStack itemStack = this.menu.summon.getItem(0);
+        var entries = ConfigLoader.getConfig().getSummonEntity(itemStack);
+        return entries.isEmpty() ? Component.literal("......") : entries.get(0).getEntity(this.minecraft.level).getName();
     }
 
     private void scaleRender(GuiGraphics guiGraphics, int x, int y, float scale, ScaleRender renderer) {

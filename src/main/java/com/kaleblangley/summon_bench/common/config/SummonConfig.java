@@ -13,6 +13,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
@@ -81,6 +82,10 @@ public class SummonConfig {
             return entityRecord.summonEntity(level, pos);
         }
 
+        public Entity getEntity(Level level) {
+            return entityRecord.getEntity(level);
+        }
+
         public void setEntity(EntityRecord entityRecord) {
             this.entityRecord = entityRecord;
         }
@@ -142,6 +147,12 @@ public class SummonConfig {
 
         public void setNbt(String nbt) {
             this.nbt = nbt;
+        }
+
+        public Entity getEntity(Level level) {
+            CompoundTag compoundTag = parseTag(nbt);
+            compoundTag.putString("id", id);
+            return EntityType.loadEntityRecursive(compoundTag, level, entity -> entity);
         }
 
         public boolean summonEntity(ServerLevel level, BlockPos pos) {
