@@ -8,8 +8,10 @@ import dev.latvian.mods.kubejs.registry.RegistryInfo;
 import dev.latvian.mods.kubejs.util.UtilsJS;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
@@ -18,13 +20,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class CountSmithingTransformRecipe extends SmithingTransformRecipe implements ICountRecipe {
     private final Int2IntOpenHashMap index2count;
+    private final boolean isCopyNbt;
 
-    public CountSmithingTransformRecipe(SmithingTransformRecipe transformRecipe, Int2IntOpenHashMap index2count) {
-        this(transformRecipe.getId(), transformRecipe.template, transformRecipe.base, transformRecipe.addition, transformRecipe.result, index2count);
+    public CountSmithingTransformRecipe(SmithingTransformRecipe transformRecipe, boolean isCopyNbt, Int2IntOpenHashMap index2count) {
+        this(transformRecipe.getId(), transformRecipe.template, transformRecipe.base, transformRecipe.addition, transformRecipe.result, isCopyNbt, index2count);
     }
 
-    public CountSmithingTransformRecipe(ResourceLocation id, Ingredient template, Ingredient base, Ingredient addition, ItemStack result, Int2IntOpenHashMap index2count) {
+    public CountSmithingTransformRecipe(ResourceLocation id, Ingredient template, Ingredient base, Ingredient addition, ItemStack result, boolean isCopyNbt, Int2IntOpenHashMap index2count) {
         super(id, template, base, addition, result);
+        this.isCopyNbt = isCopyNbt;
         this.index2count = index2count;
     }
 
@@ -40,7 +44,12 @@ public class CountSmithingTransformRecipe extends SmithingTransformRecipe implem
     }
 
     @Override
-    public boolean matches(Container container, Level level) {
+    public @NotNull ItemStack assemble(@NotNull Container container, @NotNull RegistryAccess registryAccess) {
+        return isCopyNbt ? super.assemble(container, registryAccess) : getResultItem(registryAccess).copy();
+    }
+
+    @Override
+    public boolean matches(@NotNull Container container, @NotNull Level level) {
         for (var entry : index2count.int2IntEntrySet()) {
             ItemStack selectedItem = container.getItem(entry.getIntKey()-1);
             if (selectedItem.getCount() < entry.getIntValue()) {
@@ -61,20 +70,23 @@ public class CountSmithingTransformRecipe extends SmithingTransformRecipe implem
         @Override
         public @NotNull CountSmithingTransformRecipe fromJson(@NotNull ResourceLocation resourceLocation, @NotNull JsonObject jsonObject) {
             SmithingTransformRecipe transformRecipe = SMITHING_TRANSFORM.fromJson(resourceLocation, jsonObject);
+            boolean isCopyNbt = GsonHelper.getAsBoolean(jsonObject, "count_craft:is_copy_nbt", true);
             Int2IntOpenHashMap map = fromJson(jsonObject);
-            return new CountSmithingTransformRecipe(transformRecipe, map);
+            return new CountSmithingTransformRecipe(transformRecipe, isCopyNbt, map);
         }
 
         @Override
         public CountSmithingTransformRecipe fromNetwork(@NotNull ResourceLocation resourceLocation, @NotNull FriendlyByteBuf byteBuf) {
             SmithingTransformRecipe transformRecipe = SMITHING_TRANSFORM.fromNetwork(resourceLocation, byteBuf);
+            boolean isCopyNbt = byteBuf.readBoolean();
             Int2IntOpenHashMap map = fromNetwork(byteBuf);
-            return new CountSmithingTransformRecipe(transformRecipe, map);
+            return new CountSmithingTransformRecipe(transformRecipe, isCopyNbt, map);
         }
 
         @Override
         public void toNetwork(@NotNull FriendlyByteBuf byteBuf, @NotNull CountSmithingTransformRecipe transformRecipe) {
             SMITHING_TRANSFORM.toNetwork(byteBuf, transformRecipe);
+            byteBuf.writeBoolean(transformRecipe.isCopyNbt);
             tooNetwork(byteBuf, transformRecipe);
         }
     }
