@@ -4,6 +4,9 @@
   "package": "com.kaleblangley.examples.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "BlockRenderDispatcherMixin",
+    "DoorBlockMixin",
+    "ModelBlockRendererMixin"
   ],
   "client": [
   ],
