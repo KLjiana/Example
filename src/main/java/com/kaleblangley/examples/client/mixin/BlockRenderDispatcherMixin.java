@@ -1,4 +1,4 @@
-package com.kaleblangley.examples.mixin;
+package com.kaleblangley.examples.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;

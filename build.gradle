@@ -39,6 +39,7 @@ legacyForge {
             setGameDirectory(file("server"))
         }
 
+
         configureEach {
             jvmArgument "-XX:+IgnoreUnrecognizedVMOptions"
             jvmArgument "-XX:+AllowEnhancedClassRedefinition"

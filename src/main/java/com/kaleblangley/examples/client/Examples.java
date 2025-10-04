@@ -1,7 +1,7 @@
-package com.kaleblangley.examples;
+package com.kaleblangley.examples.client;
 
-import com.kaleblangley.examples.client.DoorBlockRenderer;
-import com.kaleblangley.examples.impl.CustomBlockRenderManager;
+import com.kaleblangley.examples.client.impl.CustomBlockRenderRegisterer;
+import com.kaleblangley.examples.client.renderer.DoorBlockRenderer;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -23,7 +23,7 @@ public class Examples {
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
             modBusEvent.<FMLClientSetupEvent>addListener(event -> {
                 event.enqueueWork(() -> {
-                    CustomBlockRenderManager.register(DoorBlock.class, new DoorBlockRenderer());
+                    CustomBlockRenderRegisterer.register(DoorBlock.class, DoorBlockRenderer::new);
                 });
             });
         });

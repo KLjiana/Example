@@ -1,14 +1,14 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "com.kaleblangley.examples.mixin",
+  "package": "com.kaleblangley.examples.client.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "BlockRenderDispatcherMixin",
-    "DoorBlockMixin",
-    "ModelBlockRendererMixin"
   ],
   "client": [
+    "LevelRenderer",
+    "BlockRenderDispatcherMixin",
+    "ModelBlockRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,25 +1,33 @@
-package com.kaleblangley.examples.api;
+package com.kaleblangley.examples.client.api;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import it.unimi.dsi.fastutil.objects.Object2ByteLinkedOpenHashMap;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.model.data.ModelData;
+import org.joml.Matrix4f;
 
 import javax.annotation.Nullable;
 import java.util.BitSet;
@@ -29,28 +37,28 @@ import java.util.List;
 public interface ICustomBlockRenderer {
     /**
      * @param checkSides if {@code true}, only renders each side if {@link
-     *                   net.minecraft.world.level.block.Block#shouldRenderFace(
+     *                   #shouldRenderFace(
      *net.minecraft.world.level.block.state.BlockState,
      *                   net.minecraft.world.level.BlockGetter,
      *                   net.minecraft.core.BlockPos, net.minecraft.core.Direction,
      *                   net.minecraft.core.BlockPos)} returns {@code true}
      */
-    default void tesselateBlock(ModelBlockRenderer modelBlockRenderer, BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer consumer, boolean checkSides, RandomSource random, long seed, int packedOverlay, ModelData modelData, RenderType renderType) {
-        boolean flag = Minecraft.useAmbientOcclusion() && state.getLightEmission(level, pos) == 0 && model.useAmbientOcclusion(state, renderType);
-        Vec3 vec3 = state.getOffset(level, pos);
-        poseStack.translate(vec3.x, vec3.y, vec3.z);
+    default void tesselateBlock(RenderContent renderContent, BakedModel model, boolean checkSides, RandomSource random, long seed, int packedOverlay, ModelData modelData, RenderType renderType) {
+        boolean flag = Minecraft.useAmbientOcclusion() && renderContent.state.getLightEmission(renderContent.level, renderContent.pos) == 0 && model.useAmbientOcclusion(renderContent.state, renderType);
+        Vec3 vec3 = renderContent.state.getOffset(renderContent.level, renderContent.pos);
+        renderContent.poseStack.translate(vec3.x, vec3.y, vec3.z);
 
         try {
             if (flag) {
-                this.tesselateWithAO(modelBlockRenderer, level, model, state, pos, poseStack, consumer, checkSides, random, seed, packedOverlay, modelData, renderType);
+                this.tesselateWithAO(renderContent, model, checkSides, random, seed, packedOverlay, modelData, renderType);
             } else {
-                this.tesselateWithoutAO(modelBlockRenderer, level, model, state, pos, poseStack, consumer, checkSides, random, seed, packedOverlay, modelData, renderType);
+                this.tesselateWithoutAO(renderContent, model, checkSides, random, seed, packedOverlay, modelData, renderType);
             }
 
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.forThrowable(throwable, "Tesselating block model");
             CrashReportCategory crashreportcategory = crashreport.addCategory("Block model being tesselated");
-            CrashReportCategory.populateBlockDetails(crashreportcategory, level, pos, state);
+            CrashReportCategory.populateBlockDetails(crashreportcategory, renderContent.level, renderContent.pos, renderContent.state);
             crashreportcategory.setDetail("Using AO", flag);
             throw new ReportedException(crashreport);
         }
@@ -58,64 +66,64 @@ public interface ICustomBlockRenderer {
 
     /**
      * @param checkSides if {@code true}, only renders each side if {@link
-     *                   net.minecraft.world.level.block.Block#shouldRenderFace(
+     *                   #shouldRenderFace(
      *net.minecraft.world.level.block.state.BlockState,
      *                   net.minecraft.world.level.BlockGetter,
      *                   net.minecraft.core.BlockPos, net.minecraft.core.Direction,
      *                   net.minecraft.core.BlockPos)} returns {@code true}
      */
-    default void tesselateWithAO(ModelBlockRenderer modelBlockRenderer, BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer consumer, boolean checkSides, RandomSource random, long seed, int packedOverlay, ModelData modelData, RenderType renderType) {
+    default void tesselateWithAO(RenderContent renderContent, BakedModel model, boolean checkSides, RandomSource random, long seed, int packedOverlay, ModelData modelData, RenderType renderType) {
         float[] afloat = new float[ModelBlockRenderer.DIRECTIONS.length * 2];
         BitSet bitset = new BitSet(3);
         ModelBlockRenderer.AmbientOcclusionFace modelblockrenderer$ambientocclusionface = new ModelBlockRenderer.AmbientOcclusionFace();
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = renderContent.pos.mutable();
 
         for (Direction direction : ModelBlockRenderer.DIRECTIONS) {
             random.setSeed(seed);
-            List<BakedQuad> list = model.getQuads(state, direction, random, modelData, renderType);
+            List<BakedQuad> list = model.getQuads(renderContent.state, direction, random, modelData, renderType);
             if (!list.isEmpty()) {
-                blockpos$mutableblockpos.setWithOffset(pos, direction);
-                if (!checkSides || Block.shouldRenderFace(state, level, pos, direction, blockpos$mutableblockpos)) {
-                    this.renderModelFaceAO(modelBlockRenderer, level, state, pos, poseStack, consumer, list, afloat, bitset, modelblockrenderer$ambientocclusionface, packedOverlay);
+                blockpos$mutableblockpos.setWithOffset(renderContent.pos, direction);
+                if (!checkSides || shouldRenderFace(renderContent.state, renderContent.level, renderContent.pos, direction, blockpos$mutableblockpos)) {
+                    this.renderModelFaceAO(renderContent, list, afloat, bitset, modelblockrenderer$ambientocclusionface, packedOverlay);
                 }
             }
         }
 
         random.setSeed(seed);
-        List<BakedQuad> list1 = model.getQuads(state, null, random, modelData, renderType);
+        List<BakedQuad> list1 = model.getQuads(renderContent.state, null, random, modelData, renderType);
         if (!list1.isEmpty()) {
-            this.renderModelFaceAO(modelBlockRenderer, level, state, pos, poseStack, consumer, list1, afloat, bitset, modelblockrenderer$ambientocclusionface, packedOverlay);
+            this.renderModelFaceAO(renderContent, list1, afloat, bitset, modelblockrenderer$ambientocclusionface, packedOverlay);
         }
     }
 
     /**
      * @param checkSides if {@code true}, only renders each side if {@link
-     *                   net.minecraft.world.level.block.Block#shouldRenderFace(
+     *                   #shouldRenderFace(
      *net.minecraft.world.level.block.state.BlockState,
      *                   net.minecraft.world.level.BlockGetter,
      *                   net.minecraft.core.BlockPos, net.minecraft.core.Direction,
      *                   net.minecraft.core.BlockPos)} returns {@code true}
      */
-    default void tesselateWithoutAO(ModelBlockRenderer modelBlockRenderer, BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer consumer, boolean checkSides, RandomSource random, long seed, int packedOverlay, ModelData modelData, RenderType renderType) {
+    default void tesselateWithoutAO(RenderContent renderContent, BakedModel model, boolean checkSides, RandomSource random, long seed, int packedOverlay, ModelData modelData, RenderType renderType) {
         BitSet bitset = new BitSet(3);
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = renderContent.pos.mutable();
 
         for (Direction direction : ModelBlockRenderer.DIRECTIONS) {
             random.setSeed(seed);
-            List<BakedQuad> list = model.getQuads(state, direction, random, modelData, renderType);
+            List<BakedQuad> list = model.getQuads(renderContent.state, direction, random, modelData, renderType);
             if (!list.isEmpty()) {
-                blockpos$mutableblockpos.setWithOffset(pos, direction);
-                if (!checkSides || Block.shouldRenderFace(state, level, pos, direction, blockpos$mutableblockpos)) {
-                    int i = LevelRenderer.getLightColor(level, state, blockpos$mutableblockpos);
-                    this.renderModelFaceFlat(modelBlockRenderer, level, state, pos, i, packedOverlay, false, poseStack, consumer, list, bitset);
+                blockpos$mutableblockpos.setWithOffset(renderContent.pos, direction);
+                if (!checkSides || shouldRenderFace(renderContent.state, renderContent.level, renderContent.pos, direction, blockpos$mutableblockpos)) {
+                    int i = LevelRenderer.getLightColor(renderContent.level, renderContent.state, blockpos$mutableblockpos);
+                    this.renderModelFaceFlat(renderContent, i, packedOverlay, false, list, bitset);
                 }
             }
         }
 
         random.setSeed(seed);
-        List<BakedQuad> list1 = model.getQuads(state, null, random, modelData, renderType);
+        List<BakedQuad> list1 = model.getQuads(renderContent.state, null, random, modelData, renderType);
         if (!list1.isEmpty()) {
-            this.renderModelFaceFlat(modelBlockRenderer, level, state, pos, -1, packedOverlay, true, poseStack, consumer, list1, bitset);
+            this.renderModelFaceFlat(renderContent, -1, packedOverlay, true, list1, bitset);
         }
     }
 
@@ -125,22 +133,22 @@ public interface ICustomBlockRenderer {
      *                   be {@code true} if the face should be offset, and the second
      *                   if the face is less than a block in width and height.
      */
-    default void renderModelFaceAO(ModelBlockRenderer modelBlockRenderer, BlockAndTintGetter level, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer consumer, List<BakedQuad> quads, float[] shape, BitSet shapeFlags, ModelBlockRenderer.AmbientOcclusionFace aoFace, int packedOverlay) {
+    default void renderModelFaceAO(RenderContent renderContent, List<BakedQuad> quads, float[] shape, BitSet shapeFlags, ModelBlockRenderer.AmbientOcclusionFace aoFace, int packedOverlay) {
         for (BakedQuad bakedquad : quads) {
-            this.calculateShape(modelBlockRenderer, level, state, pos, bakedquad.getVertices(), bakedquad.getDirection(), shape, shapeFlags);
-            if (!net.minecraftforge.client.ForgeHooksClient.calculateFaceWithoutAO(level, state, pos, bakedquad, shapeFlags.get(0), aoFace.brightness, aoFace.lightmap))
-                aoFace.calculate(level, state, pos, bakedquad.getDirection(), shape, shapeFlags, bakedquad.isShade());
-            this.putQuadData(modelBlockRenderer, level, state, pos, consumer, poseStack.last(), bakedquad, aoFace.brightness[0], aoFace.brightness[1], aoFace.brightness[2], aoFace.brightness[3], aoFace.lightmap[0], aoFace.lightmap[1], aoFace.lightmap[2], aoFace.lightmap[3], packedOverlay);
+            this.calculateShape(renderContent.modelBlockRenderer, renderContent.level, renderContent.state, renderContent.pos, bakedquad.getVertices(), bakedquad.getDirection(), shape, shapeFlags);
+            if (!net.minecraftforge.client.ForgeHooksClient.calculateFaceWithoutAO(renderContent.level, renderContent.state, renderContent.pos, bakedquad, shapeFlags.get(0), aoFace.brightness, aoFace.lightmap))
+                aoFace.calculate(renderContent.level, renderContent.state, renderContent.pos, bakedquad.getDirection(), shape, shapeFlags, bakedquad.isShade());
+            this.putQuadData(renderContent, bakedquad, aoFace.brightness[0], aoFace.brightness[1], aoFace.brightness[2], aoFace.brightness[3], aoFace.lightmap[0], aoFace.lightmap[1], aoFace.lightmap[2], aoFace.lightmap[3], packedOverlay);
         }
 
     }
 
-    default void putQuadData(ModelBlockRenderer modelBlockRenderer, BlockAndTintGetter level, BlockState state, BlockPos pos, VertexConsumer consumer, PoseStack.Pose pose, BakedQuad quad, float brightness0, float brightness1, float brightness2, float brightness3, int lightmap0, int lightmap1, int lightmap2, int lightmap3, int packedOverlay) {
+    default void putQuadData(RenderContent renderContent, BakedQuad quad, float brightness0, float brightness1, float brightness2, float brightness3, int lightmap0, int lightmap1, int lightmap2, int lightmap3, int packedOverlay) {
         float f;
         float f1;
         float f2;
         if (quad.isTinted()) {
-            int i = modelBlockRenderer.blockColors.getColor(state, level, pos, quad.getTintIndex());
+            int i = renderContent.modelBlockRenderer.blockColors.getColor(renderContent.state, renderContent.level, renderContent.pos, quad.getTintIndex());
             f = (float) (i >> 16 & 255) / 255.0F;
             f1 = (float) (i >> 8 & 255) / 255.0F;
             f2 = (float) (i & 255) / 255.0F;
@@ -150,7 +158,7 @@ public interface ICustomBlockRenderer {
             f2 = 1.0F;
         }
 
-        consumer.putBulkData(pose, quad, new float[]{brightness0, brightness1, brightness2, brightness3}, f, f1, f2, new int[]{lightmap0, lightmap1, lightmap2, lightmap3}, packedOverlay, true);
+        renderContent.vertexConsumer.putBulkData(renderContent.poseStack.last(), quad, new float[]{brightness0, brightness1, brightness2, brightness3}, f, f1, f2, new int[]{lightmap0, lightmap1, lightmap2, lightmap3}, packedOverlay, true);
     }
 
     /**
@@ -233,16 +241,16 @@ public interface ICustomBlockRenderer {
      *                    be {@code true} if the face should be offset, and the second
      *                    if the face is less than a block in width and height.
      */
-    default void renderModelFaceFlat(ModelBlockRenderer modelBlockRenderer, BlockAndTintGetter level, BlockState state, BlockPos pos, int packedLight, int packedOverlay, boolean repackLight, PoseStack poseStack, VertexConsumer consumer, List<BakedQuad> quads, BitSet shapeFlags) {
+    default void renderModelFaceFlat(RenderContent renderContent, int packedLight, int packedOverlay, boolean repackLight, List<BakedQuad> quads, BitSet shapeFlags) {
         for (BakedQuad bakedquad : quads) {
             if (repackLight) {
-                this.calculateShape(modelBlockRenderer, level, state, pos, bakedquad.getVertices(), bakedquad.getDirection(), null, shapeFlags);
-                BlockPos blockpos = shapeFlags.get(0) ? pos.relative(bakedquad.getDirection()) : pos;
-                packedLight = LevelRenderer.getLightColor(level, state, blockpos);
+                this.calculateShape(renderContent.modelBlockRenderer, renderContent.level, renderContent.state, renderContent.pos, bakedquad.getVertices(), bakedquad.getDirection(), null, shapeFlags);
+                BlockPos blockpos = shapeFlags.get(0) ? renderContent.pos.relative(bakedquad.getDirection()) : renderContent.pos;
+                packedLight = LevelRenderer.getLightColor(renderContent.level, renderContent.state, blockpos);
             }
 
-            float f = level.getShade(bakedquad.getDirection(), bakedquad.isShade());
-            this.putQuadData(modelBlockRenderer, level, state, pos, consumer, poseStack.last(), bakedquad, f, f, f, f, packedLight, packedLight, packedLight, packedLight, packedOverlay);
+            float f = renderContent.level.getShade(bakedquad.getDirection(), bakedquad.isShade());
+            this.putQuadData(renderContent, bakedquad, f, f, f, f, packedLight, packedLight, packedLight, packedLight, packedOverlay);
         }
 
     }
@@ -276,6 +284,72 @@ public interface ICustomBlockRenderer {
             }
 
             consumer.putBulkData(pose, bakedquad, f, f1, f2, packedLight, packedOverlay);
+        }
+    }
+
+    default boolean shouldRenderFace(BlockState state, BlockGetter level, BlockPos offset, Direction face, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
+        if (state.skipRendering(blockstate, face)) {
+            return false;
+        } else if (state.supportsExternalFaceHiding() && blockstate.hidesNeighborFace(level, pos, state, face.getOpposite())) {
+            return false;
+        } else if (blockstate.canOcclude()) {
+            Block.BlockStatePairKey block$blockstatepairkey = new Block.BlockStatePairKey(state, blockstate, face);
+            Object2ByteLinkedOpenHashMap<Block.BlockStatePairKey> object2bytelinkedopenhashmap = Block.OCCLUSION_CACHE.get();
+            byte b0 = object2bytelinkedopenhashmap.getAndMoveToFirst(block$blockstatepairkey);
+            if (b0 != 127) {
+                return b0 != 0;
+            } else {
+                VoxelShape voxelshape = state.getFaceOcclusionShape(level, offset, face);
+                if (voxelshape.isEmpty()) {
+                    return true;
+                } else {
+                    VoxelShape voxelshape1 = blockstate.getFaceOcclusionShape(level, pos, face.getOpposite());
+                    boolean flag = Shapes.joinIsNotEmpty(voxelshape, voxelshape1, BooleanOp.ONLY_FIRST);
+                    if (object2bytelinkedopenhashmap.size() == 2048) {
+                        object2bytelinkedopenhashmap.removeLastByte();
+                    }
+
+                    object2bytelinkedopenhashmap.putAndMoveToFirst(block$blockstatepairkey, (byte) (flag ? 1 : 0));
+                    return flag;
+                }
+            }
+        } else {
+            return true;
+        }
+    }
+
+    default UpdateLevel getUpdateLevel() {
+        return UpdateLevel.DEFAULT;
+    }
+
+    /**
+     * Only call when {@link #getUpdateLevel()} is EVERY_TIME
+     */
+    default void renderBlock(RenderContent renderContent, BakedModel model, boolean checkSides, RandomSource random, long seed, int packedOverlay, ModelData modelData, RenderType renderType, LevelRenderer levelRenderer, Matrix4f projectionMatrix, float partialTick, int renderTick, Camera camera, Frustum frustum) {
+        tesselateBlock(renderContent, model, checkSides, random, seed, packedOverlay, modelData, renderType);
+    }
+
+    enum UpdateLevel {
+        EVERY_TIME,
+        DEFAULT
+    }
+
+    class RenderContent {
+        public final ModelBlockRenderer modelBlockRenderer;
+        public final BlockAndTintGetter level;
+        public final BlockState state;
+        public final BlockPos pos;
+        public final PoseStack poseStack;
+        public final VertexConsumer vertexConsumer;
+
+        public RenderContent(ModelBlockRenderer modelBlockRenderer, BlockAndTintGetter level, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer vertexConsumer) {
+            this.modelBlockRenderer = modelBlockRenderer;
+            this.level = level;
+            this.state = state;
+            this.pos = pos;
+            this.poseStack = poseStack;
+            this.vertexConsumer = vertexConsumer;
         }
     }
 }
