@@ -1,0 +1,28 @@
+{
+	"schemaVersion": 1,
+	"id": "example",
+	"version": "${version}",
+	"name": "Example Mod",
+	"description": "",
+	"authors": [
+		"KalebLangley"
+	],
+	"contact": {
+	},
+	"license": "All Right Reserved",
+	"environment": "*",
+	"accessWidener" : "example.accesswidener",
+	"entrypoints": {
+		"main": [
+			"com.kaleblangley.example.ExampleMod"
+		]
+	},
+	"mixins": [
+	],
+	"depends": {
+		"fabricloader": ">=0.18",
+		"minecraft": "~1.20.1",
+		"java": ">=17",
+		"fabric-api": "*"
+	}
+}
